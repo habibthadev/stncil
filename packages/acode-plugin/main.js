@@ -1,3 +1,5 @@
+const ace = window.ace;
+
 // Stncil syntax highlighting rules
 ace.define(
   "ace/mode/stncil_highlight_rules",
@@ -120,30 +122,23 @@ ace.define(
   }
 );
 
-// Register with Acode
-(function () {
-  function applyMode() {
-    try {
-      var file = acode.editorManager.activeFile;
-      if (file && file.name && file.name.endsWith(".stn")) {
-        acode.editorManager.editor.session.setMode("ace/mode/stncil");
-      }
-    } catch (e) {
-      // Acode not ready yet
+// Acode plugin registration
+class StncilHighlight {
+  async init() {
+    acode.editorManager.on("switch-file", this.applyMode);
+    this.applyMode();
+  }
+
+  applyMode() {
+    const file = acode.editorManager.activeFile;
+    if (file?.name?.endsWith(".stn")) {
+      acode.editorManager.editor.session.setMode("ace/mode/stncil");
     }
   }
 
-  if (typeof acode !== "undefined" && acode) {
-    acode.define("stncil", function (baseUrl, $page, _a) {
-      return {
-        init: function () {
-          acode.editorManager.on("switch-file", applyMode);
-          applyMode();
-        },
-        destroy: function () {
-          acode.editorManager.off("switch-file", applyMode);
-        },
-      };
-    });
+  async destroy() {
+    acode.editorManager.off("switch-file", this.applyMode);
   }
-})();
+}
+
+module.exports = StncilHighlight;
