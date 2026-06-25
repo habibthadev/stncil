@@ -1,0 +1,74 @@
+<div class="page-header">
+  <h1>Links</h1>
+  <span class="badge">{{ counts.total }}</span>
+</div>
+
+@if (message) {
+  <div class="alert">
+    <iconify-icon icon="hugeicons:alert-circle"></iconify-icon>
+    {{ message }}
+  </div>
+}
+
+<div class="metrics">
+  <div class="metric-card">
+    <div class="metric-label"><iconify-icon icon="hugeicons:link-01"></iconify-icon> Total</div>
+    <div class="metric-value">{{ counts.total }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label"><iconify-icon icon="hugeicons:mouse-left-click-01"></iconify-icon> Clicks</div>
+    <div class="metric-value">{{ counts.clicks }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label"><iconify-icon icon="hugeicons:chart-line-data-01"></iconify-icon> Avg</div>
+    <div class="metric-value">{{ counts.avg }}</div>
+  </div>
+</div>
+
+<form method="POST" action="/links" class="link-form" data-validate="link" novalidate>
+  <div class="field">
+    <label for="url">Destination URL</label>
+    <input type="text" id="url" name="url" placeholder="https://example.com/long-path..." />
+  </div>
+  <div class="field">
+    <label for="slug">Short link (optional)</label>
+    <input type="text" id="slug" name="slug" placeholder="my-slug" />
+  </div>
+  <button type="submit" class="btn btn-primary"><iconify-icon icon="hugeicons:plus-sign"></iconify-icon> Shorten</button>
+</form>
+
+@if (links && links.length > 0) {
+  <div class="link-list">
+    @each (link in links) {
+      <div class="link-card">
+        <div class="link-icon"><iconify-icon icon="hugeicons:link-01"></iconify-icon></div>
+        <div class="link-info">
+          <div class="link-title">{{ link.title }}</div>
+          <div class="link-destination">{{ link.url }}</div>
+          <div class="link-meta">
+            <span class="link-slug">/{{ link.slug }}</span>
+            <span class="link-stats"><iconify-icon icon="hugeicons:mouse-left-click-01"></iconify-icon> {{ link.clicks }}</span>
+            <span class="link-stats"><iconify-icon icon="hugeicons:clock-01"></iconify-icon> {{ link.createdAt | date_format("MM/DD") }}</span>
+          </div>
+        </div>
+        <div class="link-actions">
+          <button class="btn-icon" data-copy='{{ link.slug }}' aria-label="Copy short URL">
+            <iconify-icon icon="hugeicons:copy-01"></iconify-icon>
+          </button>
+          <a href='/links/{{ link.id }}/edit' class="btn-icon" aria-label="Edit">
+            <iconify-icon icon="hugeicons:pencil"></iconify-icon>
+          </a>
+          <button type="button" class="btn-icon danger" aria-label="Delete" data-delete='{{ link.id }}'>
+            <iconify-icon icon="hugeicons:delete-01"></iconify-icon>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="empty-state">
+    <div class="empty-icon"><iconify-icon icon="hugeicons:link-01"></iconify-icon></div>
+    <p>No links yet</p>
+    <p class="sub">Create your first short link above</p>
+  </div>
+}

@@ -1,0 +1,16 @@
+{
+  "name": "example-link-shortener",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:css": "sass styles/scss/main.scss:public/main.css --style compressed --no-source-map",
+    "prestart": "sass styles/scss/main.scss:public/main.css --style compressed --no-source-map",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "stncil": "workspace:*"
+  },
+  "devDependencies": {
+    "sass": "^1.86.0"
+  }
+}

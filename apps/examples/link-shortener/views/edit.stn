@@ -1,0 +1,36 @@
+@if (link) {
+  <h1 style="margin-bottom: 1.5rem;">Edit Link</h1>
+
+  @if (message) {
+    <div class="alert">
+      <iconify-icon icon="hugeicons:alert-circle"></iconify-icon>
+      {{ message }}
+    </div>
+  }
+
+  <form method="POST" action='/links/{{ link.id }}/update' class="edit-form" data-validate="edit" novalidate>
+    <div class="field">
+      <label for="url">Destination URL</label>
+      <input type="text" id="url" name="url" value='{{ link.url }}' />
+    </div>
+    <div class="field">
+      <label for="slug">Short link</label>
+      <input type="text" id="slug" value='{{ link.slug }}' readonly />
+      <span class="hint">Short links cannot be changed once created.</span>
+    </div>
+    <div class="field">
+      <label for="title">Label</label>
+      <input type="text" id="title" name="title" value='{{ link.title }}' />
+    </div>
+    <div class="actions">
+      <a href="/" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+  </form>
+} @else {
+  <div class="empty-state">
+    <div class="empty-icon"><iconify-icon icon="hugeicons:alert-circle"></iconify-icon></div>
+    <p>Link not found</p>
+    <p class="sub"><a href="/">Back to links</a></p>
+  </div>
+}
