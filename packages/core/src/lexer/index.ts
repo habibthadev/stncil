@@ -53,6 +53,7 @@ export class Lexer {
   private line = 1;
   private col = 1;
   private tokens: Token[] = [];
+  private inInterpolation = false;
 
   constructor(private readonly source: string) {}
 
@@ -66,28 +67,100 @@ export class Lexer {
         this.readSigil();
         continue;
       }
+      if (this.match("{{{")) {
+        this.addToken("INTERP_OPEN_RAW", "{{{");
+        this.inInterpolation = true;
+        continue;
+      }
       if (this.match("{{-")) {
         this.addToken("INTERP_OPEN_TRIM", "{{-");
-        this.readInterpolation();
+        this.inInterpolation = true;
         continue;
       }
       if (this.match("{{")) {
         this.addToken("INTERP_OPEN", "{{");
-        this.readInterpolation();
+        this.inInterpolation = true;
         continue;
       }
-      if (this.match("-}}")) {
-        this.addToken("INTERP_CLOSE_TRIM", "-}}");
+      if (this.inInterpolation) {
+        if (this.match("}}}")) {
+          this.addToken("INTERP_CLOSE_RAW", "}}}");
+          this.inInterpolation = false;
+          continue;
+        }
+        if (this.match("-}}")) {
+          this.addToken("INTERP_CLOSE_TRIM", "-}}");
+          this.inInterpolation = false;
+          continue;
+        }
+        if (this.match("}}")) {
+          this.addToken("INTERP_CLOSE", "}}");
+          this.inInterpolation = false;
+          continue;
+        }
+        if (this.peek() === "\n") {
+          throw new LexError("Unclosed {{ interpolation", this.makeSpan(this.pos, this.pos, this.line, this.col));
+        }
+        if (this.peek() === " " || this.peek() === "\t") {
+          this.pos++; this.col++; continue;
+        }
+      }
+      if (/[a-zA-Z_]/.test(this.peek())) {
+        const ident = this.readWord();
+        if (ident === "true" || ident === "false") this.addToken("BOOLEAN", ident);
+        else if (ident === "null") this.addToken("NULL", ident);
+        else this.addToken("IDENTIFIER", ident);
         continue;
       }
-      if (this.match("}}")) {
-        this.addToken("INTERP_CLOSE", "}}");
+      if (/[0-9]/.test(this.peek())) {
+        this.addToken("NUMBER", this.readNumber());
+        continue;
+      }
+      if (this.peek() === '"') {
+        this.addToken("STRING", this.readString());
         continue;
       }
       if (this.match("-@if")) {
         this.addToken("TRIM_CLOSE_IF", "-@if");
         continue;
       }
+      if (this.peek() === "(") { this.addToken("LPAREN", "("); this.pos++; this.col++; continue; }
+      if (this.peek() === ")") { this.addToken("RPAREN", ")"); this.pos++; this.col++; continue; }
+      if (this.peek() === "{" && this.source[this.pos + 1] !== "{") {
+        if (!this.inInterpolation) {
+          this.addToken("LBRACE", "{"); this.pos++; this.col++; continue;
+        }
+        this.addToken("LITERAL", "{"); this.pos++; this.col++; continue;
+      }
+      if (this.peek() === "}") {
+        if (this.inInterpolation) {
+          const next = this.source[this.pos + 1];
+          if (next === "}") {
+            // }} should be handled above
+          }
+          this.addToken("LITERAL", "}"); this.pos++; this.col++; continue;
+        }
+        this.addToken("RBRACE", "}"); this.pos++; this.col++; continue;
+      }
+      if (this.peek() === ",") { this.addToken("COMMA", ","); this.pos++; this.col++; continue; }
+      if (this.peek() === ":") { this.addToken("COLON", ":"); this.pos++; this.col++; continue; }
+      if (this.startsWith(">=")) { this.addToken("GTE", ">="); this.pos += 2; this.col += 2; continue; }
+      if (this.peek() === ">") { this.addToken("GT", ">"); this.pos++; this.col++; continue; }
+      if (this.startsWith("<=")) { this.addToken("LTE", "<="); this.pos += 2; this.col += 2; continue; }
+      if (this.peek() === "<") { this.addToken("LT", "<"); this.pos++; this.col++; continue; }
+      if (this.startsWith("!=")) { this.addToken("NEQ", "!="); this.pos += 2; this.col += 2; continue; }
+      if (this.peek() === "!") { this.addToken("NOT", "!"); this.pos++; this.col++; continue; }
+      if (this.startsWith("==")) { this.addToken("EQ", "=="); this.pos += 2; this.col += 2; continue; }
+      if (this.peek() === "=") { this.addToken("EQUALS", "="); this.pos++; this.col++; continue; }
+      if (this.startsWith("||")) { this.addToken("OR", "||"); this.pos += 2; this.col += 2; continue; }
+      if (this.startsWith("&&")) { this.addToken("AND", "&&"); this.pos += 2; this.col += 2; continue; }
+      if (this.startsWith("...")) { this.addToken("SPREAD", "..."); this.pos += 3; this.col += 3; continue; }
+      if (this.peek() === ".") { this.addToken("DOT", "."); this.pos++; this.col++; continue; }
+      if (this.peek() === "|") { this.addToken("PIPE", "|"); this.pos++; this.col++; continue; }
+      if (this.peek() === "-") { this.addToken("MINUS", "-"); this.pos++; this.col++; continue; }
+      if (this.peek() === "?") { this.addToken("QUESTION", "?"); this.pos++; this.col++; continue; }
+      if (this.peek() === "&") { this.addToken("AND", "&"); this.pos++; this.col++; continue; }
+      if (this.peek() === ";") { this.addToken("LITERAL", ";"); this.pos++; this.col++; continue; }
       this.readLiteral();
     }
     this.addToken("EOF", "");
@@ -132,6 +205,17 @@ export class Lexer {
       throw new LexError("Unknown sigil starting with @", this.makeSpan(start, this.pos, startLine, startCol));
     }
 
+    // Handle @else if (two words, single token)
+    if (name === "else" && this.startsWith(" if")) {
+      const endPos = this.pos + 3;
+      if (endPos >= this.source.length || !/[a-zA-Z0-9_]/.test(this.source[endPos] ?? "")) {
+        this.pos += 3;
+        this.col += 3;
+        this.addTokenSpan("ELSE_IF", "@else if", start, startLine, startCol);
+        return;
+      }
+    }
+
     if (trimStart) {
       const trimType = TRIM_KEYWORDS[name];
       if (trimType) {
@@ -141,8 +225,23 @@ export class Lexer {
       throw new LexError(`@-${name} is not a valid trim sigil`, this.makeSpan(start, this.pos, startLine, startCol));
     }
 
+    // Check for suffix trim marker (@keyword-)
+    let trimSuffix = false;
+    if (this.peek() === "-") {
+      trimSuffix = true;
+      this.pos++;
+      this.col++;
+    }
+
     const keywordType = KEYWORDS[name];
     if (keywordType) {
+      if (trimSuffix) {
+        const trimType = TRIM_KEYWORDS[name];
+        if (trimType) {
+          this.addTokenSpan(trimType, `@${name}-`, start, startLine, startCol);
+          return;
+        }
+      }
       this.addTokenSpan(keywordType, `@${name}`, start, startLine, startCol);
     } else {
       throw new LexError(`Unknown sigil @${name}`, this.makeSpan(start, this.pos, startLine, startCol));
@@ -168,11 +267,20 @@ export class Lexer {
     let depth = 1;
     while (this.pos < this.source.length) {
       if (this.match("{{")) depth++;
+      else if (this.match("-}}")) {
+        depth--;
+        if (depth === 0) {
+          this.addToken("INTERP_CLOSE_TRIM", "-}}");
+          return;
+        }
+      }
       else if (this.match("}}")) {
         depth--;
-        if (depth === 0) return;
+        if (depth === 0) {
+          this.addToken("INTERP_CLOSE", "}}");
+          return;
+        }
       }
-      else if (this.match("-}}")) return;
       else if (this.peek() === "\n") {
         throw new LexError("Unclosed {{ interpolation", this.makeSpan(this.pos, this.pos + 2, this.line, this.col));
       }
@@ -189,17 +297,15 @@ export class Lexer {
     const startLine = this.line;
     const startCol = this.col;
     while (this.pos < this.source.length) {
-      if (this.peek() === "@" || this.peek() === "{") {
-        if (this.match("@*") || this.match("{{") || this.match("{{-") || this.match("-@if")) {
-          break;
-        }
-        if (this.peek() === "@") {
-          const next = this.pos + 1 < this.source.length ? this.source[this.pos + 1] : "";
-          if (next && /[a-zA-Z_-]/.test(next)) break;
-        }
-        if (this.peek() === "{") break;
+      const ch = this.peek();
+      if (this.startsWith("@*") || this.startsWith("{{-") || this.startsWith("{{") || this.startsWith("-@if")) break;
+      if (ch === "@") {
+        const next = this.pos + 1 < this.source.length ? this.source[this.pos + 1] : "";
+        if (next && /[a-zA-Z_-]/.test(next)) break;
       }
-      if (this.peek() === "\n") { this.line++; this.col = 1; }
+      if (/[a-zA-Z0-9_"]/.test(ch)) break;
+      if ("{}()<>,:?|!;=-.".indexOf(ch) !== -1 || this.startsWith("||") || this.startsWith("&&") || this.startsWith("...")) break;
+      if (ch === "\n") { this.line++; this.col = 1; }
       else { this.col++; }
       this.pos++;
     }
@@ -207,6 +313,63 @@ export class Lexer {
     if (value.length > 0) {
       this.addTokenSpan("LITERAL", value, start, startLine, startCol);
     }
+  }
+
+  private readWord(): string {
+    let word = "";
+    while (this.pos < this.source.length && /[a-zA-Z0-9_]/.test(this.peek())) {
+      word += this.peek();
+      this.pos++;
+      this.col++;
+    }
+    return word;
+  }
+
+  private readNumber(): string {
+    let num = "";
+    while (this.pos < this.source.length && /[0-9.]/.test(this.peek())) {
+      num += this.peek();
+      this.pos++;
+      this.col++;
+    }
+    return num;
+  }
+
+  private readString(): string {
+    let str = "";
+    this.pos++; // skip opening "
+    this.col++;
+    while (this.pos < this.source.length) {
+      if (this.peek() === "\\") {
+        str += this.peek();
+        this.pos++;
+        this.col++;
+        if (this.pos < this.source.length) {
+          str += this.peek();
+          this.pos++;
+          this.col++;
+        }
+        continue;
+      }
+      if (this.peek() === '"') {
+        this.pos++;
+        this.col++;
+        return str;
+      }
+
+      str += this.peek();
+      this.pos++;
+      this.col++;
+    }
+    return str;
+  }
+
+  private startsWith(s: string): boolean {
+    if (this.pos + s.length > this.source.length) return false;
+    for (let i = 0; i < s.length; i++) {
+      if (this.source[this.pos + i] !== s[i]) return false;
+    }
+    return true;
   }
 
   private match(s: string): boolean {

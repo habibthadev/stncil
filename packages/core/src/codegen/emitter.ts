@@ -172,10 +172,18 @@ export class Emitter {
     this.instructions.push({ op: "WRITE_LITERAL", value, nodeId: nextNodeId() });
   }
 
-  private emitInterp(node: { expr: ExprNode; escapeContext?: string; trimStart: boolean; trimEnd: boolean; span: Span }): void {
+  private emitInterp(node: { expr: ExprNode; escapeContext?: string; trimStart: boolean; trimEnd: boolean; raw?: boolean; span: Span }): void {
     if (this.inScriptBlock) return;
+    if (node.expr.kind === "filter_chain") {
+      this.emitFilterChain(node.expr);
+      return;
+    }
     const path = this.exprToPath(node.expr);
     if (!path) return;
+    if (node.raw) {
+      this.instructions.push({ op: "WRITE_TRUSTED", path, nodeId: nextNodeId() });
+      return;
+    }
     const ec = node.escapeContext;
     if (ec === "url" || ec === "href") {
       this.instructions.push({ op: "WRITE_URL_ESCAPED", path, nodeId: nextNodeId() });
@@ -418,13 +426,10 @@ export class Emitter {
   }
 
   private emitStyleBlock(node: { css: string; critical: boolean; span: Span }): void {
-    const rewrittenCss = node.css.replace(/\.([a-zA-Z0-9_-]+)/g, (match, className) => {
-      return `.${className}[data-s-${this.scopeHash}]`;
-    });
     this.instructions.push({
       op: "STYLE_BLOCK",
       scopeHash: this.scopeHash,
-      css: rewrittenCss,
+      css: node.css,
       critical: node.critical,
       nodeId: nextNodeId(),
     });
@@ -529,6 +534,12 @@ export class Emitter {
           condition: this.exprToIrExpr(expr.condition),
           consequent: this.exprToIrExpr(expr.consequent),
           alternate: this.exprToIrExpr(expr.alternate),
+        };
+      case "filter_chain":
+        return {
+          kind: "filter_chain",
+          expr: this.exprToIrExpr(expr.expr),
+          filters: expr.filters.map(f => ({ name: f.name, args: f.args.map(a => this.exprToIrExpr(a)) })),
         };
     }
   }

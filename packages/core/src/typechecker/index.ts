@@ -352,6 +352,8 @@ export class TypeChecker {
         return { kind: "boolean" };
       case "ternary":
         return this.inferExprType(expr.consequent, errorSpan);
+      case "filter_chain":
+        return this.inferExprType(expr.expr, errorSpan);
     }
   }
 

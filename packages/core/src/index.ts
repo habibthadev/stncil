@@ -24,7 +24,21 @@ export interface CompileResult {
   readonly warnings: readonly CompileWarning[];
 }
 
-export { IrDocument, IrInstruction, IrExpr, OutputMode, IrType } from "./codegen/ir";
+export {
+  IrDocument, IrInstruction, IrExpr, OutputMode, IrType,
+  WriteLiteralInstruction, WriteEscapedInstruction,
+  WriteUrlEscapedInstruction, WriteJsEscapedInstruction,
+  WriteCssEscapedInstruction, WriteTrustedInstruction,
+  WriteFilterInstruction, WriteJsonInstruction, WriteNonceInstruction,
+  WriteAssetInstruction, IfInstruction, EachInstruction, LetInstruction,
+  AsyncBlockInstruction, ParallelGroupInstruction, CacheBlockInstruction,
+  BoundaryInstruction, HeadPushInstruction, StyleBlockInstruction,
+  StylesTargetInstruction, ScriptBlockInstruction, ScriptsTargetInstruction,
+  HeadTargetInstruction, CsrfInstruction, RenderPartialInstruction,
+  SlotTargetInstruction, RecursiveDefInstruction, RecursiveCallInstruction,
+  TranslateInstruction, DebugInstruction, IrFilter, IrBinaryOp, IrUnaryOp,
+  IrCacheKeyPart, SourceMap, SourceLocation,
+} from "./codegen/ir";
 export { Token } from "./lexer/token";
 export { CompileError, CompileWarning, TypeCheckError, StncilError, formatError, Span } from "./error";
 export { TypeCheckResult } from "./typechecker/index";

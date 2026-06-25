@@ -86,6 +86,7 @@ export interface InterpNode extends BaseNode {
   readonly expr: ExprNode;
   readonly trimStart: boolean;
   readonly trimEnd: boolean;
+  readonly raw?: boolean;
   readonly escapeContext?: "html" | "url" | "js" | "css" | "xml";
 }
 
@@ -97,7 +98,8 @@ export type ExprNode =
   | NullExprNode
   | BinaryExprNode
   | UnaryExprNode
-  | TernaryExprNode;
+  | TernaryExprNode
+  | FilterChainNode;
 
 export interface PathExprNode {
   readonly kind: "path";

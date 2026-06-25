@@ -281,7 +281,8 @@ export type IrExpr =
   | { kind: "null" }
   | { kind: "binary"; op: IrBinaryOp; left: IrExpr; right: IrExpr }
   | { kind: "unary"; op: IrUnaryOp; operand: IrExpr }
-  | { kind: "ternary"; condition: IrExpr; consequent: IrExpr; alternate: IrExpr };
+  | { kind: "ternary"; condition: IrExpr; consequent: IrExpr; alternate: IrExpr }
+  | { kind: "filter_chain"; expr: IrExpr; filters: readonly { readonly name: string; readonly args: readonly IrExpr[] }[] };
 
 export type IrBinaryOp = "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||";
 export type IrUnaryOp = "!";

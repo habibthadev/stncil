@@ -6,7 +6,7 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node ../../scripts/fix-imports.mjs",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
