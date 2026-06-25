@@ -1,0 +1,171 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Stncil",
+  "scopeName": "source.stncil",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#style-block" },
+    { "include": "#script-block" },
+    { "include": "#block-tags" },
+    { "include": "#interpolation" },
+    { "include": "#html-fallback" }
+  ],
+  "repository": {
+    "comments": {
+      "name": "comment.block.stncil",
+      "begin": "\\{\\#",
+      "end": "\\#\\}",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.comment.begin.stncil" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.comment.end.stncil" }
+      }
+    },
+
+    "style-block": {
+      "name": "meta.styleblock.stncil",
+      "begin": "\\{%\\s*@style\\s*%\\}",
+      "end": "\\{%\\s*@endstyle\\s*%\\}",
+      "beginCaptures": {
+        "0": { "name": "keyword.control.block.stncil" }
+      },
+      "endCaptures": {
+        "0": { "name": "keyword.control.block.stncil" }
+      },
+      "patterns": [
+        { "include": "source.css" }
+      ]
+    },
+
+    "script-block": {
+      "name": "meta.scriptblock.stncil",
+      "begin": "\\{%\\s*@script\\s*%\\}",
+      "end": "\\{%\\s*@endscript\\s*%\\}",
+      "beginCaptures": {
+        "0": { "name": "keyword.control.block.stncil" }
+      },
+      "endCaptures": {
+        "0": { "name": "keyword.control.block.stncil" }
+      },
+      "patterns": [
+        { "include": "source.js" }
+      ]
+    },
+
+    "block-tags": {
+      "patterns": [
+        { "include": "#block-tag-generic" }
+      ]
+    },
+
+    "block-tag-generic": {
+      "contentName": "meta.expression.stncil",
+      "begin": "\\{%",
+      "end": "%\\}",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.tag.begin.stncil" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.tag.end.stncil" }
+      },
+      "patterns": [
+        { "include": "#block-keywords" },
+        { "include": "#expression-parts" }
+      ]
+    },
+
+    "block-keywords": {
+      "patterns": [
+        { "match": "\\B@(?:if|elseif|else|endif|for|endfor|let|render|async|endasync|block|endblock|partial|endpartial|style|endstyle|script|endscript|use|enduse|slot|endslot|in|from|as)\\b",
+          "name": "keyword.control.stncil" },
+        { "match": "\\B@(?:true|false|null|undefined)\\b",
+          "name": "constant.language.stncil" }
+      ]
+    },
+
+    "interpolation": {
+      "contentName": "meta.expression.stncil",
+      "begin": "\\{\\{",
+      "end": "\\}\\}",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.interpolation.begin.stncil" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.interpolation.end.stncil" }
+      },
+      "patterns": [
+        { "include": "#expression-parts" }
+      ]
+    },
+
+    "expression-parts": {
+      "patterns": [
+        { "include": "#pipe-operator" },
+        { "include": "#strings" },
+        { "include": "#numbers" },
+        { "include": "#booleans" },
+        { "include": "#operators" },
+        { "include": "#paths" },
+        { "include": "#parentheses" }
+      ]
+    },
+
+    "pipe-operator": {
+      "name": "keyword.operator.pipe.stncil",
+      "match": "\\|"
+    },
+
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.stncil",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "match": "\\\\[\\\\\\\"nrt]", "name": "constant.character.escape.stncil" }
+          ]
+        },
+        {
+          "name": "string.quoted.single.stncil",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            { "match": "\\\\[\\\\\\'nrt]", "name": "constant.character.escape.stncil" }
+          ]
+        }
+      ]
+    },
+
+    "numbers": {
+      "name": "constant.numeric.stncil",
+      "match": "\\b(?:[0-9]+(?:\\.[0-9]+)?)\\b"
+    },
+
+    "booleans": {
+      "name": "constant.language.stncil",
+      "match": "\\b(?:true|false|null|undefined)\\b"
+    },
+
+    "operators": {
+      "name": "keyword.operator.stncil",
+      "match": "(?:==|!=|<=|>=|&&|\\|\\||[-+*/%()=\\!<>])"
+    },
+
+    "paths": {
+      "name": "variable.other.stncil",
+      "match": "(?:(?:[a-zA-Z_$][a-zA-Z0-9_$]*)(?:\\.[a-zA-Z_$][a-zA-Z0-9_$]*)*)"
+    },
+
+    "parentheses": {
+      "patterns": [
+        { "match": "\\(", "name": "punctuation.parenthesis.begin.stncil" },
+        { "match": "\\)", "name": "punctuation.parenthesis.end.stncil" }
+      ]
+    },
+
+    "html-fallback": {
+      "include": "text.html.derivative"
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "stncil-vscode",
+  "publisher": "stncil",
+  "displayName": "Stncil",
+  "description": "Language support for Stncil template files (.stn)",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Programming Languages"],
+  "keywords": ["stncil", "template", "templating"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "stncil",
+        "aliases": ["Stncil", "stncil"],
+        "extensions": [".stn"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "stncil",
+        "scopeName": "source.stncil",
+        "path": "./syntaxes/stncil.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "echo 'no code to lint'"
+  }
+}

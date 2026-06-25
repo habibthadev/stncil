@@ -1,0 +1,9 @@
+{
+  "id": "stncil",
+  "name": "Stncil Syntax Highlighting",
+  "version": "1.0.0",
+  "main": "main.js",
+  "icon": "",
+  "author": "stncil",
+  "description": "Syntax highlighting for Stncil template files (.stn)"
+}
