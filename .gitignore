@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+.turbo/
+.env
+.env.local
+prompt/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.stncil.json
+*.types.ts
+*.types.go
+*.types.py
+*.vsix

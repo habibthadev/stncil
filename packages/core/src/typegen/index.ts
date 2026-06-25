@@ -1,0 +1,1 @@
+export { generateTypeDefinition } from "./typescript";
