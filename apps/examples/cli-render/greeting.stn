@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Greeting</title></head>
+<body>
+  <h1>Hello, {{ name | upper }}!</h1>
+  <p>Score: {{ score }}</p>
+
+  @if (is_admin) {
+    <p>You are an admin.</p>
+  } @else {
+    <p>You are a regular user.</p>
+  }
+
+  <h2>Items ({{ items.length }})</h2>
+  <ul>
+  @each (item in items) {
+    <li>{{ item }}</li>
+  }
+  </ul>
+
+  <p>Generated at: {{ now | date_format("YYYY-MM-DD HH:mm:ss") }}</p>
+</body>
+</html>

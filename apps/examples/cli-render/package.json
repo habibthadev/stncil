@@ -1,0 +1,11 @@
+{
+  "name": "example-cli-render",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "stn-render": "./cli.js"
+  },
+  "dependencies": {
+    "stncil": "workspace:*"
+  }
+}

@@ -1,0 +1,64 @@
+<div class="page-header">
+  <h1>Tasks</h1>
+  <span class="badge">{{ counts.all }}</span>
+</div>
+
+@if (message) {
+  <div class="alert">{{ message }}</div>
+}
+
+<form method="POST" action="/todos" class="todo-form">
+  <input type="text" name="title" placeholder="Write a task&hellip;" required autofocus />
+  <button type="submit" class="btn btn-sm">Add</button>
+</form>
+
+<div class="todo-filters">
+  <a href="/" class='filter @if (currentFilter == "all") { active }'>All &middot; {{ counts.all }}</a>
+  <a href="/?filter=active" class='filter @if (currentFilter == "active") { active }'>Active &middot; {{ counts.active }}</a>
+  <a href="/?filter=completed" class='filter @if (currentFilter == "completed") { active }'>Done &middot; {{ counts.completed }}</a>
+</div>
+
+@if (todos && todos.length > 0) {
+  <div class="todo-list">
+    @each (todo in todos) {
+      <div class='todo-item'>
+        <form method="POST" action='/todos/{{ todo.id }}/toggle' style="display: contents;">
+          <button type="submit" class='todo-check @if (todo.completed) { completed }' aria-label="Toggle complete">
+            @if (todo.completed) {
+              <i data-lucide='check' style="width: 16px; height: 16px; stroke-width: 3;"></i>
+            } @else {
+              <i data-lucide='minus' style="width: 16px; height: 16px; stroke-width: 3;"></i>
+            }
+          </button>
+        </form>
+        <div class="todo-body">
+          <span class='todo-title @if (todo.completed) { completed }'>{{ todo.title }}</span>
+          <span class="todo-meta">{{ todo.createdAt | date_format("MM/DD") }}</span>
+        </div>
+        <div class="todo-actions">
+          <a href='/todos/{{ todo.id }}/edit' class="edit-btn" aria-label="Edit">
+            <i data-lucide='pencil' style="width: 15px; height: 15px; stroke-width: 2;"></i>
+          </a>
+          <form method="POST" action='/todos/{{ todo.id }}/delete' style="display: contents;">
+            <button type="submit" class="delete-btn" aria-label="Delete" onclick="return confirm('Delete this task?')">
+              <i data-lucide='trash-2' style="width: 15px; height: 15px; stroke-width: 2;"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="empty-state">
+    @if (currentFilter == "active") {
+      <p>No active tasks.</p>
+      <p class="sub"><a href="/?filter=completed" style="color: var(--accent);">View completed tasks</a></p>
+    } @else if (currentFilter == "completed") {
+      <p>No completed tasks yet.</p>
+      <p class="sub">Complete a task to see it here.</p>
+    } @else {
+      <p>No tasks yet.</p>
+      <p class="sub">Add one above to get started.</p>
+    }
+  </div>
+}

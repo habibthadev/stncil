@@ -1,0 +1,38 @@
+<h1>Stncil</h1>
+<p class="tagline">{{ tagline }}</p>
+
+@if (posts && posts.length > 0) {
+  <div class="section">
+    <div class="section-header">
+      <h2>Posts</h2>
+      <span class="badge">{{ posts.length }}</span>
+    </div>
+    @each (post in posts) {
+      <article class="post-item">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+          <h3>{{ post.title }}</h3>
+          <span class='pill @if (post.author == "Alice") { accent } @else if (post.author == "Bob") { teal } @else { muted }'>{{ post.author }}</span>
+        </div>
+        <div class="meta">{{ post.date | date_format("MM DD, YYYY") }}</div>
+        <p class="excerpt">{{ post.excerpt }}</p>
+        <div class="actions">
+          <a href='/hello?name={{ post.author }}' class="btn btn-sm btn-ghost"><i data-lucide='arrow-right' style="width: 14px; height: 14px; stroke-width: 2;"></i> Say Hello</a>
+        </div>
+      </article>
+    }
+  </div>
+} @else {
+  <div class="empty-state">
+    <p>No posts yet.</p>
+  </div>
+}
+
+<div class="section">
+  <h2 style="margin-bottom: 1rem;">Server</h2>
+  <div class="info-box">
+    <dl class="info-grid">
+      <div><dt>Posts</dt><dd>{{ posts.length }}</dd></div>
+      <div><dt>Since</dt><dd>{{ started_at | date_format("MM DD, HH:mm") }}</dd></div>
+    </dl>
+  </div>
+</div>

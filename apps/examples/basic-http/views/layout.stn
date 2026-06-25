@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }}</title>
+  <meta name="description" content='{{ description }}' />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin="anonymous"></script>
+  @style {
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --paper: #f5f2ed;
+      --ink: #1c1917;
+      --muted: #8a7f7a;
+      --border: #e5ddd5;
+      --accent: #d4593a;
+      --teal: #2d6a5e;
+      --code-bg: #eae5dd;
+      --surface: #fff;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    h1 { font-size: 3rem; font-weight: 700; line-height: 1.05; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.125rem; }
+
+    .skip-link {
+      position: absolute; top: -100%; left: 1rem;
+      background: var(--ink); color: var(--paper);
+      padding: 0.5rem 1rem;
+      z-index: 100; text-decoration: none; font-size: 0.875rem;
+    }
+
+    .skip-link:focus { top: 0; }
+
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      gap: 1.5rem;
+      align-items: stretch;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--paper);
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    nav a:hover { color: var(--ink); }
+    nav a.active { color: var(--ink); border-bottom-color: var(--accent); }
+
+    nav .brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--ink);
+      margin-right: auto;
+      display: flex;
+      align-items: center;
+      letter-spacing: -0.01em;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+    }
+
+    .tagline {
+      font-size: 1.125rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    .section {
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      margin-top: 2.5rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .section-header h2 { margin-bottom: 0; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0 0.375rem;
+      background: var(--border);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .pill.accent { background: var(--accent); color: #fff; }
+    .pill.teal { background: var(--teal); color: #fff; }
+    .pill.muted { background: #e0dbd3; color: #6b625d; }
+
+    .post-item {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    .post-item:first-of-type { border-top: 1px solid var(--border); }
+    .post-item:last-of-type { border-bottom: none; }
+
+    .post-item h3 { font-weight: 600; }
+
+    .post-item .meta {
+      color: var(--muted);
+      font-size: 0.8125rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .post-item .excerpt {
+      color: #5a5450;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+
+    .post-item .actions { margin-top: 0.25rem; }
+
+    code {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.8125rem;
+      background: var(--code-bg);
+      padding: 0.125rem 0.375rem;
+    }
+
+    pre code { background: none; padding: 0; }
+
+    footer {
+      color: var(--muted);
+      font-size: 0.8125rem;
+      padding: 2rem 1.5rem 3rem;
+      border-top: 1px solid var(--border);
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+
+    th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+
+    td { padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 0.5rem 1.125rem;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      border: 1px solid var(--ink);
+      cursor: pointer;
+    }
+
+    .btn:hover { background: var(--accent); border-color: var(--accent); }
+    .btn-ghost { background: transparent; color: var(--ink); border-color: var(--border); }
+    .btn-ghost:hover { background: var(--border); border-color: var(--muted); }
+    .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; }
+
+    .info-box {
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      background: var(--surface);
+    }
+
+    .info-box h3 { margin-bottom: 0.75rem; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .info-grid dt {
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .info-grid dd {
+      font-weight: 600;
+      font-size: 1.5rem;
+      font-family: 'Space Grotesk', sans-serif;
+      margin-top: 0.125rem;
+    }
+
+    .empty-state { padding: 3rem 0; color: var(--muted); }
+    .empty-state p { font-size: 0.9375rem; }
+
+    .error-code {
+      font-size: 6rem;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      line-height: 1;
+    }
+
+    .greeting-highlight { color: var(--accent); }
+  }
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <nav role="navigation" aria-label="Main navigation">
+    <span class="brand">Stncil</span>
+    <a href="/" @if (is_home) { class='active' }>Home</a>
+    <a href="/hello" @if (is_greeting) { class='active' }>Greeting</a>
+  </nav>
+
+  <main id="main" class="container">
+    {{{ content }}}
+  </main>
+
+  <footer>
+    <p>Rendered with <strong>Stncil</strong> &middot; {{ year }}</p>
+  </footer>
+  <script>lucide.createIcons()</script>
+</body>
+</html>

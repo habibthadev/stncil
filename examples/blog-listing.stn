@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ page_title }} — {{ site_name }}</title>
+  <meta name="description" content='{{ meta_description }}' />
+</head>
+<body>
+  <header>
+    <h1>{{ page_title }}</h1>
+    <p class="subtitle">{{ subtitle }}</p>
+  </header>
+
+  <main>
+    @if (posts && posts.length > 0) {
+      <div class="post-list">
+      @each (post in posts) {
+        <article class="post">
+          <h2><a href='/posts/{{ post.slug }}'>{{ post.title }}</a></h2>
+          <p class="meta">
+            By {{ post.author | default("Anonymous") }}
+            on {{ post.date | date_format("MMM DD, YYYY") }}
+            @if (post.tags && post.tags.length > 0) {
+              in
+              @each (tag in post.tags) {
+                <a href='/tags/{{ tag | lower }}' class="tag">{{ tag }}</a>
+                @if (true) {, }
+              }
+            }
+          </p>
+          <p class="excerpt">{{ post.excerpt | truncate(200) }}</p>
+          <a href='/posts/{{ post.slug }}' class="read-more">Read more &rarr;</a>
+        </article>
+      }
+      </div>
+
+      @if (total_pages > 1) {
+      <nav class="pagination">
+        @if (current_page > 1) {
+          <a href='?page={{ current_page - 1 }}'>&laquo; Prev</a>
+        }
+        <span>Page {{ current_page }} of {{ total_pages }}</span>
+        @if (current_page < total_pages) {
+          <a href='?page={{ current_page + 1 }}'>Next &raquo;</a>
+        }
+      </nav>
+      }
+    } @else {
+      <div class="empty-state">
+        <h2>No posts yet</h2>
+        <p>Check back soon for new content.</p>
+      </div>
+    }
+  </main>
+
+  <footer>
+    <p>&copy; {{ year }} {{ site_name }}. All rights reserved.</p>
+  </footer>
+</body>
+</html>

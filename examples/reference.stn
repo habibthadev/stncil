@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ page_title }}</title>
+</head>
+<body>
+  <h1>{{ page_title }}</h1>
+
+  {# ================================================================== #}
+  {# Variables & Interpolation                                           #}
+  {# ================================================================== #}
+  <section>
+    <h2>Variables</h2>
+    <p>Simple: {{ name }}</p>
+    <p>Nested path: {{ user.profile.display_name }}</p>
+    <p>With default: {{ bio | default("No bio provided.") }}</p>
+  </section>
+
+  {# ================================================================== #}
+  {# Filter chains                                                      #}
+  {# ================================================================== #}
+  <section>
+    <h2>Filters</h2>
+    <p>Uppercase: {{ name | upper }}</p>
+    <p>Lowercase: {{ name | lower }}</p>
+    <p>Truncated: {{ long_text | truncate(50) }}</p>
+    <p>Joined list: {{ tags | join(", ") }}</p>
+    <p>Chained: {{ name | lower | upper }}</p>
+    <p>Date: {{ created_at | date_format("YYYY-MM-DD") }}</p>
+  </section>
+
+  {# ================================================================== #}
+  {# Conditionals                                                       #}
+  {# ================================================================== #}
+  <section>
+    <h2>Conditionals</h2>
+
+    @if (user.role == "admin") {
+      <p class="admin-badge">Administrator</p>
+    } @else if (user.role == "moderator") {
+      <p class="mod-badge">Moderator</p>
+    } @else {
+      <p class="user-badge">Member</p>
+    }
+
+    @if (user.bio) {
+      <blockquote>{{ user.bio }}</blockquote>
+    }
+
+    @if (user.score >= 100 && user.verified) {
+      <p>Trusted contributor</p>
+    }
+  </section>
+
+  {# ================================================================== #}
+  {# @let assignments                                                   #}
+  {# ================================================================== #}
+  <section>
+    <h2>Let bindings</h2>
+
+    @let full_name = user.first_name ~ " " ~ user.last_name
+    <p>Full name: {{ full_name }}</p>
+
+    @let discounted = price * (1 - discount_percent / 100)
+    <p>Original: ${{ price }}</p>
+    <p>Discounted: ${{ discounted }}</p>
+
+    @let is_premium = user.score > 1000
+    @if (is_premium) {
+      <p class="premium">Premium member</p>
+    }
+  </section>
+
+  {# ================================================================== #}
+  {# @each loops                                                        #}
+  {# ================================================================== #}
+  <section>
+    <h2>Loops</h2>
+
+    <h3>Basic each loop</h3>
+    <ul>
+    @each (item in items) {
+      <li>{{ item.name }}: {{ item.value }}</li>
+    } @empty {
+      <li>No items to display.</li>
+    }
+    </ul>
+
+    <h3>Each loop with index</h3>
+    <ol>
+    @each (item, idx in items) {
+      <li value='{{ idx + 1 }}'>{{ item.name }}</li>
+    }
+    </ol>
+  </section>
+
+  {# ================================================================== #}
+  {# @async blocks                                                      #}
+  {# ================================================================== #}
+  <section>
+    <h2>Async data</h2>
+    @async (comments from fetchComments(postId)) {
+      <div class="comments">
+      @each (comment in comments) {
+        <div class="comment">
+          <strong>{{ comment.author }}</strong>
+          <p>{{ comment.body }}</p>
+        </div>
+      }
+      </div>
+    } @loading {
+      <p>Loading comments...</p>
+    } @error (err) {
+      <p class="error">Error: {{ err.message }}</p>
+    }
+  </section>
+
+  {# ================================================================== #}
+  {# Expressions                                                        #}
+  {# ================================================================== #}
+  <section>
+    <h2>Expressions</h2>
+
+    @let result_a = 10 + 5 * 2
+    @let result_b = (10 + 5) * 2
+    @let result_c = 100 / items.length
+    @let result_d = count % 2 == 0
+    @let result_e = !is_deleted
+    @let result_f = -temperature
+
+    <p>a={{ result_a }}, b={{ result_b }}, c={{ result_c }}</p>
+    <p>d={{ result_d }}, e={{ result_e }}, f={{ result_f }}</p>
+
+    <h3>Ternary</h3>
+    <p>Status: {{ user.is_active ? "active" : "inactive" }}</p>
+  </section>
+
+  {# ================================================================== #}
+  {# Escape contexts                                                    #}
+  {# ================================================================== #}
+  <section>
+    <h2>Escaping</h2>
+    <p>{{ unsafe_html }}</p>
+    <a href='/search?q={{ query }}'>Search</a>
+    <div style='background-color: {{ color_value }}'>Color</div>
+    <div>{{ unsafe_html }}</div>
+  </section>
+</body>
+</html>

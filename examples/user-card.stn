@@ -1,0 +1,36 @@
+<div class="user-card">
+  <img src='{{ avatar }}' alt="{{ name }}'s avatar" class="avatar" />
+  <h2>{{ name }}</h2>
+  <p class="role">{{ role | upper }}</p>
+
+  <div class="details">
+    <p>Email: <a href='mailto:{{ email }}'>{{ email }}</a></p>
+    <p>Joined: {{ joined | date_format("MMMM DD, YYYY") }}</p>
+    <p>Reputation: {{ reputation }}</p>
+  </div>
+
+  @if (bio) {
+    <div class="bio">
+      <h3>About</h3>
+      <p>{{ bio }}</p>
+    </div>
+  }
+
+  @if (badges && badges.length > 0) {
+    <div class="badges">
+      <h3>Badges</h3>
+      <ul>
+      @each (badge in badges) {
+        <li class='badge {{ badge.type }}'>
+          {{ badge.name }}
+          @if (badge.count > 1) {
+            <span class="count">x{{ badge.count }}</span>
+          }
+        </li>
+      }
+      </ul>
+    </div>
+  } @else {
+    <p>No badges yet.</p>
+  }
+</div>

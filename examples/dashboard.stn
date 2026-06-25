@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ title }} — {{ site_name }}</title>
+  @style {
+    :root { --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --muted: #94a3b8; --accent: #38bdf8; --green: #4ade80; --red: #f87171; --yellow: #fbbf24; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    .dashboard { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .sidebar { background: var(--surface); padding: 1.5rem; border-right: 1px solid #334155; }
+    .sidebar h2 { font-size: 1.25rem; margin-bottom: 2rem; color: var(--accent); }
+    .sidebar nav a { display: block; padding: .5rem .75rem; color: var(--muted); text-decoration: none; border-radius: 6px; margin-bottom: .25rem; }
+    .sidebar nav a:hover, .sidebar nav a.active { background: #334155; color: var(--text); }
+    .main { padding: 2rem; }
+    .main h1 { font-size: 1.75rem; margin-bottom: .5rem; }
+    .main .subtitle { color: var(--muted); margin-bottom: 2rem; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); padding: 1.25rem; border-radius: 8px; border: 1px solid #334155; }
+    .stat-card .label { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-card .value { font-size: 2rem; font-weight: 700; margin-top: .25rem; }
+    .stat-card .value.green { color: var(--green); }
+    .stat-card .value.red { color: var(--red); }
+    .stat-card .value.accent { color: var(--accent); }
+    .stat-card .value.yellow { color: var(--yellow); }
+    .card { background: var(--surface); border-radius: 8px; border: 1px solid #334155; margin-bottom: 1.5rem; }
+    .card-header { padding: 1rem 1.25rem; border-bottom: 1px solid #334155; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    .card-body { padding: 1.25rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: .5rem .75rem; color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #334155; }
+    td { padding: .75rem; border-bottom: 1px solid #1e293b; font-size: .875rem; }
+    .status { display: inline-flex; align-items: center; gap: .375rem; }
+    .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status.active::before { background: var(--green); }
+    .status.pending::before { background: var(--yellow); }
+    .status.inactive::before { background: var(--red); }
+    .pill { display: inline-block; padding: .125rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 500; }
+    .pill.admin { background: #3b0764; color: #d8b4fe; }
+    .pill.user { background: #1e3a5f; color: #93c5fd; }
+    .pill.moderator { background: #14532d; color: #86efac; }
+    .chart-placeholder { height: 200px; background: #1e293b; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--muted); border: 1px dashed #334155; }
+    .badge { background: #334155; padding: .125rem .375rem; border-radius: 4px; font-size: .75rem; }
+  }
+</head>
+<body>
+  @let greeting = user.hour < 12 ? "Good morning" : (user.hour < 18 ? "Good afternoon" : "Good evening")
+  @let active_users = users | length
+
+  <div class="dashboard">
+    <aside class="sidebar">
+      <h2>&larr; {{ site_name }}</h2>
+      <nav>
+        <a href="/dashboard" class="active">Overview</a>
+        <a href="/dashboard/users">Users</a>
+        <a href="/dashboard/posts">Posts</a>
+        <a href="/dashboard/analytics">Analytics</a>
+        <a href="/dashboard/settings">Settings</a>
+      </nav>
+    </aside>
+
+    <div class="main">
+      <h1>{{ greeting }}, {{ user.name }}.</h1>
+      <p class="subtitle">Here's what's happening {{ date | date_format("dddd, MMMM DD") }}.</p>
+
+      <div class="stats">
+        <div class="stat-card">
+          <p class="label">Total Users</p>
+          <p class="value accent">{{ stats.total_users }}</p>
+          <p class="label" style="margin-top: .5rem;">+{{ stats.new_today }} today</p>
+        </div>
+        <div class="stat-card">
+          <p class="label">Active Users</p>
+          <p class="value green">{{ active_users }}</p>
+          <p class="label" style="margin-top: .5rem;">{{ (active_users / stats.total_users * 100) | number_format(%.1f) }}% of total</p>
+        </div>
+        <div class="stat-card">
+          <p class="label">Revenue</p>
+          <p class="value yellow">${{ stats.revenue }}</p>
+          <p class="label" style="margin-top: .5rem;">{{ stats.revenue_growth > 0 ? "+" : "" }}{{ stats.revenue_growth }}% vs last month</p>
+        </div>
+        <div class="stat-card">
+          <p class="label">Open Tickets</p>
+          <p class="value red">{{ stats.open_tickets }}</p>
+          <p class="label" style="margin-top: .5rem;">{{ stats.tickets_resolved }} resolved today</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>Recent Users</span>
+          <a href="/dashboard/users" style="color: var(--accent); font-size: .875rem; text-decoration: none;">View all</a>
+        </div>
+        <div class="card-body">
+          @if (recent_users && recent_users.length > 0) {
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+            @each (u, i in recent_users) {
+              <tr>
+                <td>
+                  <strong>{{ u.name }}</strong>
+                  @if (u.id == user.id) { <span class="badge">you</span> }
+                </td>
+                <td>{{ u.email }}</td>
+                <td><span class="pill">{{ u.role | capitalize }}</span></td>
+                <td><span class='status {{ u.status }}'>{{ u.status | capitalize }}</span></td>
+                <td>{{ u.created_at | date_format("%b %d") }}</td>
+              </tr>
+            }
+            </tbody>
+          </table>
+          } @else {
+            <p style="color: var(--muted);">No recent users.</p>
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>Revenue Trend</span>
+          <span style="color: var(--muted); font-size: .875rem;">Last 7 days</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-placeholder">
+            <p>Chart: @each (d in daily_revenue) { {{ d }} @if (d != daily_revenue.last) { &middot; } }</p>
+          </div>
+        </div>
+      </div>
+
+      
+    </div>
+  </div>
+</body>
+</html>
