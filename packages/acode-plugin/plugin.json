@@ -1,9 +1,21 @@
 {
-  "id": "stncil",
-  "name": "Stncil Syntax Highlighting",
-  "version": "1.0.0",
+  "$schema": "https://acode.app/schema/plugin/v0.1.0.json",
+  "id": "acode.plugin.stncil",
+  "name": "Stncil Syntax Highlighter",
   "main": "main.js",
-  "icon": "",
-  "author": "stncil",
-  "description": "Syntax highlighting for Stncil template files (.stn)"
+  "version": "1.0.1",
+  "readme": "readme.md",
+  "changelogs": "changelog.md",
+  "icon": "icon.png",
+  "files": [],
+  "minVersionCode": 290,
+  "license": "MIT",
+  "keywords": ["stncil", "template", "syntax", "highlighting"],
+  "price": 0,
+  "permissions": [],
+  "author": {
+    "name": "habibthadev",
+    "email": "adebayohabib7@gmail.com",
+    "github": "https://github.com/habibthadev"
+  }
 }
