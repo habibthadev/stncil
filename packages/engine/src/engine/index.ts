@@ -24,7 +24,7 @@ export class Engine {
   private useCache: boolean;
 
   constructor(options: EngineOptions = {}) {
-    this.useCache = options.cache !== false;
+    this.useCache = options.cache !== false && options.cacheSize !== 0;
     this.cache = new CompilerCache(options.cacheSize ?? 256);
     this.loader = new TemplateLoader(options.fs);
     this.compileOptions = {
@@ -77,29 +77,16 @@ export class Engine {
   }
 
   private async compileToIr(source: string, sourceFile: string): Promise<IrDocument> {
-    const hash = this.simpleHash(source);
-
-    if (this.useCache) {
-      const cached = this.cache.get(hash);
-      if (cached) return cached;
+    if (!this.useCache) {
+      return (await this.compile(source, sourceFile)).ir;
     }
+
+    const key = JSON.stringify([sourceFile, source]);
+    const cached = this.cache.get(key);
+    if (cached) return cached;
 
     const result = await this.compile(source, sourceFile);
-
-    if (this.useCache) {
-      this.cache.set(hash, result.ir);
-    }
-
+    this.cache.set(key, result.ir);
     return result.ir;
-  }
-
-  private simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const ch = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + ch;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(16).padStart(8, "0");
   }
 }

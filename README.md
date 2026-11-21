@@ -53,6 +53,10 @@ const result = await engine.compileAndRender(
 console.log(result.html); // <h1>Hello World</h1>
 ```
 
+The engine caches up to 256 compiled templates by source and file name. Use
+`new Engine({ cacheSize: 128 })` to change the capacity, or `{ cache: false }` or
+`{ cacheSize: 0 }` to disable caching. Capacity must be a non-negative safe integer.
+
 ### With Layout Composition
 
 ```ts

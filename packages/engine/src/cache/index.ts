@@ -1,39 +1,40 @@
 import type { IrDocument } from "@stncil/core";
 
-interface CacheEntry {
-  ir: IrDocument;
-  accessOrder: number;
-}
-
 export class CompilerCache {
-  private entries: Map<string, CacheEntry> = new Map();
-  private maxSize: number;
-  private counter = 0;
+  private entries: Map<string, IrDocument> = new Map();
+  private readonly maxSize: number;
 
   constructor(maxSize: number = 256) {
+    if (!Number.isSafeInteger(maxSize) || maxSize < 0) {
+      throw new RangeError("Cache size must be a non-negative safe integer");
+    }
     this.maxSize = maxSize;
   }
 
-  get(sourceHash: string): IrDocument | undefined {
-    const entry = this.entries.get(sourceHash);
-    if (!entry) return undefined;
-    entry.accessOrder = ++this.counter;
-    return entry.ir;
+  get(key: string): IrDocument | undefined {
+    const ir = this.entries.get(key);
+    if (!ir) return undefined;
+    this.entries.delete(key);
+    this.entries.set(key, ir);
+    return ir;
   }
 
-  set(sourceHash: string, ir: IrDocument): void {
-    if (this.entries.size >= this.maxSize && !this.entries.has(sourceHash)) {
-      this.evict();
+  set(key: string, ir: IrDocument): void {
+    if (this.maxSize === 0) return;
+    this.entries.delete(key);
+    if (this.entries.size >= this.maxSize) {
+      const oldestKey = this.entries.keys().next().value;
+      if (oldestKey !== undefined) this.entries.delete(oldestKey);
     }
-    this.entries.set(sourceHash, { ir, accessOrder: ++this.counter });
+    this.entries.set(key, ir);
   }
 
-  has(sourceHash: string): boolean {
-    return this.entries.has(sourceHash);
+  has(key: string): boolean {
+    return this.entries.has(key);
   }
 
-  delete(sourceHash: string): boolean {
-    return this.entries.delete(sourceHash);
+  delete(key: string): boolean {
+    return this.entries.delete(key);
   }
 
   clear(): void {
@@ -42,19 +43,5 @@ export class CompilerCache {
 
   get size(): number {
     return this.entries.size;
-  }
-
-  private evict(): void {
-    let oldestKey: string | null = null;
-    let oldestOrder = Infinity;
-    for (const [key, entry] of this.entries) {
-      if (entry.accessOrder < oldestOrder) {
-        oldestOrder = entry.accessOrder;
-        oldestKey = key;
-      }
-    }
-    if (oldestKey) {
-      this.entries.delete(oldestKey);
-    }
   }
 }

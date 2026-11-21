@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { Engine } from "../src/engine/index";
 
 describe("Engine", () => {
@@ -27,19 +27,17 @@ describe("Engine", () => {
 
   it("handles @if blocks", async () => {
     const engine = new Engine({ debug: false });
-    const result = await engine.compileAndRender(
-      "@if (show) { visible } @else { hidden }",
-      { show: true },
-    );
+    const result = await engine.compileAndRender("@if (show) { visible } @else { hidden }", {
+      show: true,
+    });
     expect(result.html).toContain("visible");
   });
 
   it("handles @each blocks", async () => {
     const engine = new Engine({ debug: false });
-    const result = await engine.compileAndRender(
-      "@each (item in items) { [{{ item }}] }",
-      { items: ["a", "b", "c"] },
-    );
+    const result = await engine.compileAndRender("@each (item in items) { [{{ item }}] }", {
+      items: ["a", "b", "c"],
+    });
     expect(result.html).toContain("[a]");
     expect(result.html).toContain("[b]");
     expect(result.html).toContain("[c]");
@@ -47,23 +45,65 @@ describe("Engine", () => {
 
   it("handles @let blocks", async () => {
     const engine = new Engine({ debug: false });
-    const result = await engine.compileAndRender(
-      '@let greeting = "hi" {{ greeting }}',
-    );
+    const result = await engine.compileAndRender('@let greeting = "hi" {{ greeting }}');
     expect(result.html).toBe("hi");
   });
 
   it("uses cache by default", async () => {
     const engine = new Engine({ debug: false });
+    const compile = vi.spyOn(engine, "compile");
     await engine.compileAndRender("cached");
     const result = await engine.compileAndRender("cached");
     expect(result.html).toBe("cached");
+    expect(compile).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps templates with colliding legacy hashes separate", async () => {
+    const engine = new Engine({ debug: false });
+    expect((await engine.compileAndRender("Aa")).html).toBe("Aa");
+    expect((await engine.compileAndRender("BB")).html).toBe("BB");
+    expect((await engine.compileAndRender("Aa")).html).toBe("Aa");
+  });
+
+  it("keeps identical source in different files separate", async () => {
+    const engine = new Engine({ debug: false });
+    const compile = vi.spyOn(engine, "compile");
+    const source = "@style { .card { color: red; } }";
+    await engine.compileAndRender(source, {}, { sourceFile: "first.stn" });
+    await engine.compileAndRender(source, {}, { sourceFile: "second.stn" });
+    await engine.compileAndRender(source, {}, { sourceFile: "first.stn" });
+
+    expect(compile).toHaveBeenCalledTimes(2);
+    const first = await compile.mock.results[0]!.value;
+    const second = await compile.mock.results[1]!.value;
+    expect(first.ir.sourceFile).toBe("first.stn");
+    expect(second.ir.sourceFile).toBe("second.stn");
+    expect(first.ir.scopeHash).not.toBe(second.ir.scopeHash);
+  });
+
+  it("renders newly registered content instead of stale cached output", async () => {
+    const engine = new Engine({ debug: false });
+    engine.registerTemplate("page.stn", "Aa");
+    expect((await engine.render("page.stn")).html).toBe("Aa");
+    engine.registerTemplate("page.stn", "BB");
+    expect((await engine.render("page.stn")).html).toBe("BB");
   });
 
   it("can disable cache", async () => {
     const engine = new Engine({ cache: false, debug: false });
+    const compile = vi.spyOn(engine, "compile");
+    await engine.compileAndRender("no cache");
     const result = await engine.compileAndRender("no cache");
     expect(result.html).toBe("no cache");
+    expect(compile).toHaveBeenCalledTimes(2);
+  });
+
+  it("can disable caching with a zero capacity", async () => {
+    const engine = new Engine({ cacheSize: 0, debug: false });
+    const compile = vi.spyOn(engine, "compile");
+    await engine.compileAndRender("uncached");
+    await engine.compileAndRender("uncached");
+    expect(compile).toHaveBeenCalledTimes(2);
   });
 
   it("registerTemplate stores template", async () => {
@@ -83,19 +123,13 @@ describe("Engine", () => {
 
   it("handles filter chains", async () => {
     const engine = new Engine({ debug: false });
-    const result = await engine.compileAndRender(
-      '{{ name | upper }}',
-      { name: "hello" },
-    );
+    const result = await engine.compileAndRender("{{ name | upper }}", { name: "hello" });
     expect(result.html).toBe("HELLO");
   });
 
   it("handles nested paths", async () => {
     const engine = new Engine({ debug: false });
-    const result = await engine.compileAndRender(
-      "{{ user.name }}",
-      { user: { name: "Alice" } },
-    );
+    const result = await engine.compileAndRender("{{ user.name }}", { user: { name: "Alice" } });
     expect(result.html).toBe("Alice");
   });
 });

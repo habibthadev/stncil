@@ -73,4 +73,39 @@ describe("CompilerCache", () => {
     expect(cache.has("a")).toBe(true);
     expect(cache.has("b")).toBe(false);
   });
+
+  it("refreshes existing entries without evicting another entry", () => {
+    const cache = new CompilerCache(2);
+    const updated = makeIr();
+    cache.set("a", makeIr());
+    cache.set("b", makeIr());
+    cache.set("a", updated);
+    expect(cache.size).toBe(2);
+    expect(cache.has("b")).toBe(true);
+    cache.set("c", makeIr());
+    expect(cache.get("a")).toBe(updated);
+    expect(cache.has("b")).toBe(false);
+  });
+
+  it("evicts an empty-string key and stays within capacity", () => {
+    const cache = new CompilerCache(1);
+    cache.set("", makeIr());
+    cache.set("next", makeIr());
+    expect(cache.has("")).toBe(false);
+    expect(cache.size).toBe(1);
+  });
+
+  it("stores no entries when capacity is zero", () => {
+    const cache = new CompilerCache(0);
+    cache.set("a", makeIr());
+    expect(cache.size).toBe(0);
+    expect(cache.get("a")).toBeUndefined();
+  });
+
+  it.each([-1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
+    "rejects invalid capacity %s",
+    (capacity) => {
+      expect(() => new CompilerCache(capacity)).toThrow(RangeError);
+    },
+  );
 });
