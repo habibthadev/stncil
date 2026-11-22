@@ -18,6 +18,23 @@ for (const name of (await fs.readdir(examples)).filter((name) => name.endsWith("
     assert.ok(!result.html.includes("@async"), "An async directive leaked into output");
     for (const text of expected[name] ?? [])
       assert.ok(result.html.includes(text), `Missing expected output: ${text}`);
+    if (name === "reference.stn" || name === "dashboard.stn") {
+      const empty = await engine.compileAndRender(
+        source,
+        {
+          ...context,
+          items: [],
+          stats: { ...context.stats, total_users: 0 },
+        },
+        { sourceFile: name },
+      );
+      assert.equal(
+        empty.errors.length,
+        0,
+        "Empty collections must render without arithmetic errors",
+      );
+      assert.ok(empty.html.includes(name === "reference.stn" ? "c=0" : "0.0% of total"));
+    }
     const html = result.html.includes("<html")
       ? result.html
       : `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Sora:wght@500&display=swap" rel="stylesheet"><link rel="stylesheet" href="../apps/examples/shared/design.css"><title>User card / stncil</title></head><body class="layout-narrow"><header class="site-header"><nav class="nav"><span class="brand"><span class="brand-sigil" aria-hidden="true">&#64;</span> stncil</span></nav></header><main class="container">${result.html}</main><footer class="footer">Rendered from local sample data.</footer></body></html>`;
