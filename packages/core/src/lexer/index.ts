@@ -455,7 +455,9 @@ export class Lexer {
     const name = this.readIdentifier();
     if (
       this.styleDepth > 0 ||
-      (start > 0 && /[a-zA-Z0-9._%+-]/.test(this.source[start - 1]!) && this.peek() === ".")
+      (start > 0 &&
+        /[a-zA-Z0-9._%+-]/.test(this.source[start - 1]!) &&
+        (this.peek() === "." || !Object.hasOwn(KEYWORDS, name)))
     ) {
       this.addTokenSpan("LITERAL", `@${name}`, start, startLine, startCol);
       return;

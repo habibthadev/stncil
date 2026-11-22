@@ -25,37 +25,68 @@ export interface CompileResult {
 }
 
 export {
-  IrDocument, IrInstruction, IrExpr, OutputMode, IrType,
-  WriteLiteralInstruction, WriteExpressionInstruction, WriteEscapedInstruction,
-  WriteUrlEscapedInstruction, WriteJsEscapedInstruction,
-  WriteCssEscapedInstruction, WriteTrustedInstruction,
-  WriteFilterInstruction, WriteJsonInstruction, WriteNonceInstruction,
-  WriteAssetInstruction, IfInstruction, EachInstruction, LetInstruction,
-  AsyncBlockInstruction, ParallelGroupInstruction, CacheBlockInstruction,
-  BoundaryInstruction, HeadPushInstruction, StyleBlockInstruction,
-  StylesTargetInstruction, ScriptBlockInstruction, ScriptsTargetInstruction,
-  HeadTargetInstruction, CsrfInstruction, RenderPartialInstruction, LayoutInstruction,
-  SlotTargetInstruction, RecursiveDefInstruction, RecursiveCallInstruction,
-  TranslateInstruction, DebugInstruction, IrFilter, IrBinaryOp, IrUnaryOp,
-  IrCacheKeyPart, SourceMap, SourceLocation,
+  IrDocument,
+  IrInstruction,
+  IrExpr,
+  OutputMode,
+  IrType,
+  WriteLiteralInstruction,
+  WriteExpressionInstruction,
+  WriteEscapedInstruction,
+  WriteUrlEscapedInstruction,
+  WriteJsEscapedInstruction,
+  WriteCssEscapedInstruction,
+  WriteTrustedInstruction,
+  WriteFilterInstruction,
+  WriteJsonInstruction,
+  WriteNonceInstruction,
+  WriteAssetInstruction,
+  IfInstruction,
+  EachInstruction,
+  LetInstruction,
+  AsyncBlockInstruction,
+  ParallelGroupInstruction,
+  CacheBlockInstruction,
+  BoundaryInstruction,
+  HeadPushInstruction,
+  StyleBlockInstruction,
+  StylesTargetInstruction,
+  ScriptBlockInstruction,
+  ScriptsTargetInstruction,
+  HeadTargetInstruction,
+  CsrfInstruction,
+  RenderPartialInstruction,
+  LayoutInstruction,
+  SlotTargetInstruction,
+  RecursiveDefInstruction,
+  RecursiveCallInstruction,
+  TranslateInstruction,
+  DebugInstruction,
+  IrFilter,
+  IrBinaryOp,
+  IrUnaryOp,
+  IrCacheKeyPart,
+  SourceMap,
+  SourceLocation,
 } from "./codegen/ir";
 export { Token } from "./lexer/token";
-export { CompileError, CompileWarning, TypeCheckError, StncilError, formatError, Span } from "./error";
+export {
+  CompileError,
+  CompileWarning,
+  TypeCheckError,
+  StncilError,
+  formatError,
+  Span,
+} from "./error";
 export { TypeCheckResult } from "./typechecker/index";
 export { Scope } from "./typechecker/scope";
 export { generateTypeDefinition } from "./typegen/typescript";
 export { generateScopeHash } from "./codegen/scope-hash";
 
 export async function compile(options: CompileOptions): Promise<CompileResult> {
-  const {
-    sourceFile,
-    source,
-    strict = false,
-    debug = true,
-    assetManifest,
-  } = options;
+  const { sourceFile, source, strict = false, debug = true, assetManifest } = options;
 
-  if (!source) {
+  if (typeof source !== "string") {
     throw new StncilError("Source string is required for compilation");
   }
 
@@ -66,12 +97,14 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
     tokens = lexer.tokenize();
   } catch (err) {
     if (err instanceof StncilError) {
-      throw new CompileError([{
-        code: "LEX_ERROR",
-        message: err.message,
-        span: (err as any).span ?? { start: 0, end: 0, line: 1, col: 1 },
-        sourceFile,
-      }]);
+      throw new CompileError([
+        {
+          code: "LEX_ERROR",
+          message: err.message,
+          span: (err as any).span ?? { start: 0, end: 0, line: 1, col: 1 },
+          sourceFile,
+        },
+      ]);
     }
     throw err;
   }
@@ -83,12 +116,14 @@ export async function compile(options: CompileOptions): Promise<CompileResult> {
     ast = parser.parse();
   } catch (err) {
     if (err instanceof StncilError) {
-      throw new CompileError([{
-        code: "PARSE_ERROR",
-        message: err.message,
-        span: (err as any).span ?? { start: 0, end: 0, line: 1, col: 1 },
-        sourceFile,
-      }]);
+      throw new CompileError([
+        {
+          code: "PARSE_ERROR",
+          message: err.message,
+          span: (err as any).span ?? { start: 0, end: 0, line: 1, col: 1 },
+          sourceFile,
+        },
+      ]);
     }
     throw err;
   }

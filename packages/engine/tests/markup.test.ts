@@ -3,6 +3,16 @@ import { readFileSync } from "node:fs";
 import { Engine } from "../src/engine/index";
 
 describe("literal markup", () => {
+  it("renders an empty template without an error", async () => {
+    const result = await new Engine({ debug: false }).compileAndRender("");
+    expect(result.html).toBe("");
+    expect(result.errors).toHaveLength(0);
+  });
+  it("preserves at-signs in font and package URLs", async () => {
+    const source =
+      '<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600"><script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>';
+    expect((await new Engine({ debug: false }).compileAndRender(source)).html).toBe(source);
+  });
   it("preserves quoted attributes and whitespace", async () => {
     const source =
       '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<div style="display: flex; gap: 1rem;" aria-label="Task actions">content</div>';
