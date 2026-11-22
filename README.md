@@ -1,18 +1,29 @@
 # stncil
 
-A typed, streaming-capable, runtime-agnostic template engine for TypeScript. `.stn` files compile to an intermediate representation and render to HTML, text, or XML — with escape safety at every output context.
+stncil is a template language with an `@` sigil, a compiler, and a streaming renderer.
+The TypeScript implementation compiles `.stn` files to JSON intermediate
+representation and interprets that representation without evaluating JavaScript
+from templates.
 
 ## Features
 
-- **Typed context contracts** — `@context` blocks declare expected data shapes; mismatches are compile errors, not silent failures
-- **Escape-safe output** — `{{ }}` is HTML-escaped by default; dedicated escape paths for URL, CSS, JSON, and XML contexts
-- **Streaming rendering** — `@async` blocks resolve in parallel; output is a `ReadableStream` that flushes as data arrives
-- **Head collection** — `@style`, `@script`, `@head`, and `@csrf` blocks from anywhere in the render tree merge into `<head>`
-- **Layout composition** — `@layout` and `@slot` for template inheritance
-- **Recursive templates** — `@recursive` for tree structures like nested comments
-- **Built-in filters** — `capitalize`, `upper`, `lower`, `truncate`, `date_format`, `default`, `join`, `length`, `reverse`, `json`, `url_encode`, `number_format`, and more
-- **Runtime-agnostic** — runs on Node.js, Bun, Deno, and Cloudflare Workers (WHATWG standard APIs only in core/runtime)
-- **Compiled IR** — templates compile once, cache in memory, render on every request
+- **Escaped interpolation**: HTML escaping by default, explicit raw HTML, URL validation, URL-component encoding, and script-safe JSON values.
+- **Expressions**: arithmetic, comparisons, concatenation, ternaries, arrays, objects, indexing, and filter chains.
+- **Scoped blocks**: local bindings, loop metadata, nested loops, and error boundaries.
+- **Async rendering**: registered fetchers, concurrent sibling work, ordered streams, cancellation, and error branches.
+- **Composition**: layouts, named/default slots, relative imports, isolated partial props, and bounded composition depth.
+- **Context declarations**: objects, optional fields, arrays, nullable unions, and string-keyed records, with generated TypeScript declarations.
+- **Compiled-template caching**: a bounded in-memory LRU cache keyed by source and filename.
+- **Application tokens**: explicit CSRF fields, CSP nonces, and asset-manifest output.
+
+Core and runtime use web-standard APIs. The high-level loader accepts a filesystem
+adapter. This repository supplies a JavaScript runtime; it does not yet supply
+runtime ports for Python, Go, or other languages.
+
+See [the engine comparison](docs/engine-comparison.md) for implementation evidence,
+measurements, and current limits. Head collection, script directives, translation,
+and fragment caching remain incomplete and are not part of the supported feature
+list above.
 
 ## Packages
 
@@ -20,7 +31,7 @@ A typed, streaming-capable, runtime-agnostic template engine for TypeScript. `.s
 | ------------------------------------- | ------------------------------------------------------------------------------- |
 | [`@stncil/core`](packages/core)       | Lexer, parser, type checker, and code emitter — compiles `.stn` templates to IR |
 | [`@stncil/runtime`](packages/runtime) | IR executor, HTML/URL/CSS escape utilities, and built-in filters                |
-| [`@stncil/engine`](packages/engine)   | High-level `Engine` API with template loader and compiler cache                 |
+| [`stncil`](packages/engine)           | High-level `Engine` API with template loader and compiler cache                 |
 
 ## Quick Start
 
@@ -84,11 +95,14 @@ const final = await engine.compileAndRender(layout, {
 
 ### Variable Interpolation
 
+Literal whitespace is preserved around output and between directives. Always
+quote HTML attributes; HTML escaping alone does not make unquoted attributes or
+arbitrary script/CSS positions safe.
+
 ```stncil
 {{ user.name }}              {# HTML-escaped output #}
 {{ user.bio | trust("html") }}  {# Raw HTML (trusted) #}
 {{{ user.content }}}         {# Raw HTML (triple braces) #}
-{{- user.name -}}            {# Trim whitespace both sides #}
 ```
 
 Template paths read only own object properties. Inherited fields and prototype
@@ -178,17 +192,23 @@ Partials receive their explicit props; they do not inherit the caller's data.
 Named props override spread props. Composition is limited to 32 levels by
 default; `maxTemplateDepth` accepts a positive safe integer.
 
-### Style and Script Blocks
+### Styles and Script Data
+
+`@style` writes an inline style element. It does not currently scope selectors or
+collect styles from other templates into the head.
 
 ```stncil
 @style {
   .card { border: 1px solid #ccc; }
 }
-
-@script(defer) {
-  console.log("loaded");
-}
 ```
+
+Use an external script for application behavior. For bootstrap data in a native
+script element, `@json(value)` writes a JSON value with script-closing characters
+escaped. The application owns the CSP policy and supplies any required nonce.
+
+`@script`, `@head`, `@styles`, and `@scripts` are parsed prototypes with incomplete
+runtime behavior. Do not rely on them for generated page content yet.
 
 ### Output Modes
 
@@ -207,6 +227,15 @@ default; `maxTemplateDepth` accepts a positive safe integer.
   user?: { name: string, avatar?: string }
 }
 ```
+
+Grouped unions and repeated array suffixes work: `(number | null)[][]`.
+String-keyed records use `Record<string, number>`. Unknown named types and literal
+string unions are rejected rather than silently widened to strings.
+
+Context declarations check template references and generate types. They do not
+validate the data supplied at render time. Use `strict: true` to make compiler
+diagnostics errors; strict mode defaults to false. Validate external data in your
+application. The checker is not a complete type system for every expression.
 
 ### Filters
 
@@ -252,6 +281,19 @@ stncil/
 | `pnpm lint`       | Lint source files       |
 | `pnpm format`     | Format source files     |
 | `pnpm clean`      | Clean build artifacts   |
+
+Run the examples with pnpm:
+
+```sh
+pnpm examples:check
+pnpm examples:output
+pnpm examples:http
+pnpm examples:preview
+```
+
+The preview server reads the generated HTML in `.stncil-examples/`. See
+[the example audit](docs/example-audit.md) and [the design rules](apps/examples/DESIGN.md).
+Fonts load through the CDN; no font binaries are bundled.
 
 ## Editor Support
 

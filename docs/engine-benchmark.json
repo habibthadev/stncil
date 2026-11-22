@@ -1,0 +1,86 @@
+{
+  "node": "v26.13.0",
+  "platform": "linux",
+  "architecture": "x64",
+  "workload": "escaped heading and 20-item loop; compiled synchronous render; median of five 3000-render rounds",
+  "results": [
+    {
+      "name": "stncil",
+      "version": "0.1.0",
+      "prepareAndFirstRenderMs": 0.44528763000000027,
+      "warmRenderMicroseconds": 53.491210000000024,
+      "warmRoundsMicroseconds": [
+        59.28394333333336,
+        53.491210000000024,
+        51.719662000000014,
+        53.363980666666635,
+        55.931678
+      ]
+    },
+    {
+      "name": "ejs",
+      "version": "3.1.10",
+      "prepareAndFirstRenderMs": 0.07990363000000116,
+      "warmRenderMicroseconds": 18.921796333333305,
+      "warmRoundsMicroseconds": [
+        20.774328333333337,
+        21.510955666666707,
+        18.77885333333332,
+        18.49860933333336,
+        18.921796333333305
+      ]
+    },
+    {
+      "name": "pug",
+      "version": "3.0.3",
+      "prepareAndFirstRenderMs": 1.70918815,
+      "warmRenderMicroseconds": 2.2513339999999666,
+      "warmRoundsMicroseconds": [
+        2.5556249999999636,
+        2.313134666666732,
+        2.2513339999999666,
+        2.2305179999999987,
+        2.112128333333279
+      ]
+    },
+    {
+      "name": "handlebars",
+      "version": "4.7.8",
+      "prepareAndFirstRenderMs": 0.4837989999999991,
+      "warmRenderMicroseconds": 11.15577833333335,
+      "warmRoundsMicroseconds": [
+        14.783226000000015,
+        13.031028333333326,
+        11.15577833333335,
+        10.902064999999993,
+        10.61810533333331
+      ]
+    },
+    {
+      "name": "nunjucks",
+      "version": "3.2.4",
+      "prepareAndFirstRenderMs": 0.2803282100000024,
+      "warmRenderMicroseconds": 36.35122200000008,
+      "warmRoundsMicroseconds": [
+        38.875184666666584,
+        38.29784000000002,
+        35.2852303333334,
+        35.169266666666616,
+        36.35122200000008
+      ]
+    },
+    {
+      "name": "liquidjs",
+      "version": "10.24.0",
+      "prepareAndFirstRenderMs": 0.35153753999999937,
+      "warmRenderMicroseconds": 121.43553866666662,
+      "warmRoundsMicroseconds": [
+        132.5409783333333,
+        121.43553866666662,
+        120.42164066666678,
+        117.39748700000018,
+        123.66440966666657
+      ]
+    }
+  ]
+}
