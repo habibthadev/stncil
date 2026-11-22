@@ -111,6 +111,18 @@ describe("filters", () => {
       const d = new Date(2024, 0, 15, 10, 30, 45);
       expect(getFilter("date_format")!(d, "YYYY-MM-DD HH:mm:ss")).toBe("2024-01-15 10:30:45");
     });
+
+    it("matches month and weekday tokens without replacing their prefixes", () => {
+      const d = new Date(2026, 5, 24, 14, 5, 9);
+      expect(getFilter("date_format")!(d, "dddd, MMMM DD, YYYY HH:mm:ss")).toBe("Wednesday, June 24, 2026 14:05:09");
+      expect(getFilter("date_format")!(d, "MMM DD / MMM DD")).toBe("Jun 24 / Jun 24");
+      expect(getFilter("date_format")!(d, "%b %d, %Y")).toBe("Jun 24, 2026");
+    });
+
+    it("preserves invalid dates instead of displaying NaN", () => {
+      expect(getFilter("date_format")!("not-a-date", "YYYY-MM-DD")).toBe("not-a-date");
+      expect(getFilter("date_format")!(null)).toBe("");
+    });
   });
 
   describe("split/replace", () => {

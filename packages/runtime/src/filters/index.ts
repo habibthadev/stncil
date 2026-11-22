@@ -1,4 +1,5 @@
 import { escapeHtml } from "../escape/html";
+import { escapeUrl } from "../escape/url";
 
 export type FilterFn = (value: unknown, ...args: unknown[]) => unknown;
 
@@ -73,18 +74,29 @@ const filters: Record<string, FilterFn> = Object.assign(Object.create(null), {
   },
 
   date_format: (value, fmt?: unknown) => {
+    if (value == null) return "";
     const formatStr = String(fmt ?? "YYYY-MM-DD");
     const d = value instanceof Date ? value : new Date(String(value));
     if (Number.isNaN(d.getTime())) return String(value ?? "");
     const pad = (n: number) => String(n).padStart(2, "0");
-    return formatStr
-      .replace("YYYY", String(d.getFullYear()))
-      .replace("MM", pad(d.getMonth() + 1))
-      .replace("DD", pad(d.getDate()))
-      .replace("HH", pad(d.getHours()))
-      .replace("mm", pad(d.getMinutes()))
-      .replace("ss", pad(d.getSeconds()));
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const tokens: Record<string, string> = {
+      YYYY: String(d.getFullYear()), YY: String(d.getFullYear()).slice(-2),
+      MMMM: months[d.getMonth()]!, MMM: months[d.getMonth()]!.slice(0, 3),
+      MM: pad(d.getMonth() + 1), M: String(d.getMonth() + 1),
+      DD: pad(d.getDate()), D: String(d.getDate()),
+      dddd: weekdays[d.getDay()]!, ddd: weekdays[d.getDay()]!.slice(0, 3),
+      HH: pad(d.getHours()), H: String(d.getHours()),
+      mm: pad(d.getMinutes()), m: String(d.getMinutes()),
+      ss: pad(d.getSeconds()), s: String(d.getSeconds()),
+    };
+    const aliases: Record<string, string> = { "%Y": "YYYY", "%y": "YY", "%m": "MM", "%b": "MMM", "%B": "MMMM", "%d": "DD", "%H": "HH", "%M": "mm", "%S": "ss" };
+    return formatStr.replace(/%[YymbBdHMS]|YYYY|YY|MMMM|MMM|MM|M|DD|D|dddd|ddd|HH|H|mm|m|ss|s/g,
+      token => tokens[aliases[token] ?? token]!);
   },
+
+  url_encode: (value) => escapeUrl(value),
 
   split: (value, delimiter = ",") => String(value ?? "").split(String(delimiter)),
   replace: (value, search, replacement = "") => String(value ?? "").split(String(search)).join(String(replacement)),
