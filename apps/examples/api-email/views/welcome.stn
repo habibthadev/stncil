@@ -1,31 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Sora:wght@500&display=swap" rel="stylesheet" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Welcome, {{ user.name }}!</title>
+  <style>strong { font-weight: 500; } p, h1, h2, td { overflow-wrap: anywhere; } a { word-break: break-word; }</style>
 </head>
-<body style="margin: 0; padding: 0; background: #f4f4f5; font-family: -apple-system, system-ui, sans-serif;">
+<body style="margin: 0; padding: 0; background: #f6f6f5; font-family: 'Instrument Sans', system-ui, -apple-system, sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
-      <td align="center" style="padding: 40px 0;">
-        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background: #fff; border-radius: 8px; overflow: hidden;">
+      <td align="center" style="padding: 24px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 480px; background: #fff; border: 1px solid #e6e6e4; border-radius: 12px; overflow: hidden;">
           <tr>
-            <td style="background: #2563eb; padding: 32px; text-align: center;">
-              <h1 style="color: #fff; margin: 0; font-size: 24px;">Welcome, {{ user.name }}!</h1>
+            <td style="padding: 32px; border-bottom: 1px solid #e6e6e4;">
+              <p style="margin: 0 0 24px; font-size: 18px; color: #191919;">&#64; {{ site_name }}</p>
+              <h1 style="font-family: 'Sora', system-ui, sans-serif; font-weight: 500; color: #191919; margin: 0; font-size: 24px;">Welcome, {{ user.name }}!</h1>
             </td>
           </tr>
           <tr>
             <td style="padding: 32px;">
-              <p style="margin: 0 0 16px; color: #334155; font-size: 15px; line-height: 1.6;">
-                Thanks for joining <strong>{{ site_name }}</strong>. We're excited to have you!
+              <p style="margin: 0 0 16px; color: #191919; font-size: 15px; line-height: 1.6;">
+                Thanks for joining <strong>{{ site_name }}</strong>. Your account is ready.
               </p>
 
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
                 <tr>
-                  <td style="background: #f8fafc; border-radius: 6px; padding: 16px;">
-                    <p style="margin: 0 0 8px; color: #64748b; font-size: 13px;">Account Details</p>
-                    <p style="margin: 0; color: #0f172a; font-size: 14px;">
+                  <td style="background: #f6f6f5; border-radius: 6px; padding: 16px;">
+                    <p style="margin: 0 0 8px; color: #646464; font-size: 13px;">Account Details</p>
+                    <p style="margin: 0; color: #191919; font-size: 14px;">
                       Email: <strong>{{ user.email }}</strong><br />
                       Joined: <strong>{{ user.joined_at | date_format("MMMM DD, YYYY") }}</strong>
                     </p>
@@ -34,27 +40,27 @@
               </table>
 
               @if (user.plan == "premium") {
-                <p style="margin: 0 0 16px; color: #334155; font-size: 15px; line-height: 1.6;">
-                  You've signed up for <strong>Premium</strong> — enjoy all features!
+                <p style="margin: 0 0 16px; color: #191919; font-size: 15px; line-height: 1.6;">
+                  You've signed up for <strong>Premium</strong>. Your plan includes all features.
                 </p>
               } @else {
-                <p style="margin: 0 0 16px; color: #334155; font-size: 15px; line-height: 1.6;">
+                <p style="margin: 0 0 16px; color: #191919; font-size: 15px; line-height: 1.6;">
                   You're on the <strong>{{ user.plan | capitalize }}</strong> plan. Upgrade anytime.
                 </p>
               }
 
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center" style="background: #2563eb; border-radius: 6px; padding: 12px 24px;">
-                    <a href='{{ dashboard_url }}' style="color: #fff; text-decoration: none; font-size: 14px; font-weight: 600;">Go to Dashboard</a>
+                  <td align="center" style="background: #191919; border-radius: 24px; padding: 12px 24px;">
+                    <a href='{{ dashboard_url | url }}' style="color: #fff; text-decoration: none; font-size: 14px; font-weight: 500;">Go to Dashboard</a>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
           <tr>
-            <td style="padding: 24px 32px; border-top: 1px solid #e2e8f0; text-align: center;">
-              <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+            <td style="padding: 24px 32px; border-top: 1px solid #e6e6e4; text-align: center;">
+              <p style="margin: 0; color: #646464; font-size: 12px;">
                 {{ site_name }} &middot; {{ year }}
               </p>
             </td>

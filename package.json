@@ -10,7 +10,9 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint packages/*/src",
     "format": "prettier --write packages/*/src/**/*.ts",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "examples:output": "node scripts/check-app-output.mjs",
+    "examples:preview": "node scripts/preview-examples.mjs"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

@@ -16,16 +16,22 @@ const templates = {
 };
 
 export async function renderWelcomeEmail(user, siteName, dashboardUrl) {
-  return engine.compileAndRender(templates.welcome, {
-    user,
-    site_name: siteName,
-    dashboard_url: dashboardUrl,
-    year: new Date().getFullYear(),
-  });
+  return engine.compileAndRender(
+    templates.welcome,
+    {
+      user,
+      site_name: siteName,
+      dashboard_url: dashboardUrl,
+      year: new Date().getFullYear(),
+    },
+    { sourceFile: path.join(__dirname, "views/welcome.stn") },
+  );
 }
 
 export async function renderNotification(notification) {
-  return engine.compileAndRender(templates.notification, notification);
+  return engine.compileAndRender(templates.notification, notification, {
+    sourceFile: path.join(__dirname, "views/notification.stn"),
+  });
 }
 
 // Run as script to send demo output
@@ -43,8 +49,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   );
   if (welcomeResult.errors.length > 0) {
     console.error("Errors:", welcomeResult.errors);
+    process.exitCode = 1;
   }
-  console.log(welcomeResult.html);
+  if (!welcomeResult.errors.length) console.log(welcomeResult.html);
   console.log("\n");
 
   console.log("=== Notification ===");
@@ -64,6 +71,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   });
   if (notifResult.errors.length > 0) {
     console.error("Errors:", notifResult.errors);
+    process.exitCode = 1;
   }
-  console.log(notifResult.html);
+  if (!notifResult.errors.length) console.log(notifResult.html);
 }

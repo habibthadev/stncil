@@ -1,7 +1,15 @@
 <!DOCTYPE html>
-<html>
-<head><title>Greeting</title></head>
-<body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Sora:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../apps/examples/shared/design.css" />
+  <title>Greeting / stncil</title>
+</head>
+<body class="layout-narrow"><header class="site-header"><nav class="nav" aria-label="Example navigation"><span class="brand"><span class="brand-sigil" aria-hidden="true">&#64;</span> stncil</span><span class="nav-divider" aria-hidden="true">/</span><span class="nav-current">CLI example</span></nav></header><main class="container">
   <h1>Hello, {{ name | upper }}!</h1>
   <p>Score: {{ score }}</p>
 
@@ -11,13 +19,13 @@
     <p>You are a regular user.</p>
   }
 
-  <h2>Items ({{ items.length }})</h2>
+  <section class="demo-section"><h2>Items ({{ items.length }})</h2>
   <ul>
   @each (item in items) {
     <li>{{ item }}</li>
   }
-  </ul>
+  </ul></section>
 
   <p>Generated at: {{ now | date_format("YYYY-MM-DD HH:mm:ss") }}</p>
-</body>
+</main><footer class="footer"><span>Made with stncil</span><span>Rendered from local sample data.</span></footer></body>
 </html>

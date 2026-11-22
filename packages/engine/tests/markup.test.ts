@@ -99,7 +99,7 @@ describe("literal markup", () => {
     });
     expect(result.errors).toHaveLength(0);
     expect(result.html).toContain('style="padding: 8px 12px;');
-    expect(result.html.match(/border-top: 1px solid #f1f5f9/g)).toHaveLength(1);
+    expect(result.html.match(/border-top: 1px solid #e6e6e4/g)).toHaveLength(1);
     expect(result.html).not.toContain("@if");
     expect(result.html).not.toContain("{{");
   });

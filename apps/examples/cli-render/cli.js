@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import fs from "node:fs";
-import path from "node:path";
 import { Engine } from "stncil";
 
 const engine = new Engine({ debug: false });
@@ -52,7 +51,8 @@ async function main() {
     templateSource = fs.readFileSync(templatePath, "utf-8");
 
     const dataIndex = args.indexOf("--data");
-    if (dataIndex !== -1 && args[dataIndex + 1]) {
+    if (dataIndex !== -1) {
+      if (!args[dataIndex + 1]) throw new Error("--data requires a JSON object");
       try {
         dataSource = JSON.parse(args[dataIndex + 1]);
       } catch {
@@ -69,11 +69,13 @@ async function main() {
     }
 
     if (args.includes("--watch") || args.includes("-w")) {
+      validateContext(dataSource);
       watchAndRender(templatePath, templateSource, dataSource);
       return;
     }
   }
 
+  validateContext(dataSource);
   dataSource.now = new Date();
   await renderAndPrint(templateSource, dataSource);
 }
@@ -86,11 +88,13 @@ async function renderAndPrint(source, data) {
       for (const err of result.errors) {
         console.error("  -", err.message);
       }
+      process.exitCode = 1;
+      return;
     }
     process.stdout.write(result.html);
   } catch (err) {
     console.error("Render error:", err.message);
-    process.exit(1);
+    process.exitCode = 1;
   }
 }
 
@@ -118,4 +122,13 @@ function readStdin() {
   });
 }
 
-main();
+function validateContext(data) {
+  if (data == null || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error("Context data must be a JSON object");
+  }
+}
+
+main().catch((error) => {
+  console.error("Error:", error.message);
+  process.exitCode = 1;
+});
