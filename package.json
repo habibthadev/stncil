@@ -5,6 +5,7 @@
     "build":     "pnpm -r build",
     "test":      "vitest run",
     "test:watch": "vitest",
+    "examples:check": "pnpm build && node scripts/check-examples.mjs",
     "typecheck": "pnpm -r typecheck",
     "lint":      "eslint packages/*/src",
     "format":    "prettier --write packages/*/src/**/*.ts",

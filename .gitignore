@@ -1,5 +1,6 @@
 node_modules/
 .playwright-mcp/
+.stncil-examples/
 dist/
 *.tsbuildinfo
 coverage/
