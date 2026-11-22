@@ -202,7 +202,8 @@ describe("Parser", () => {
   it("parses @styles and @scripts targets", () => {
     const ast = parse("@styles @scripts");
     expect(ast.nodes[0]!.kind).toBe("styles_target");
-    expect(ast.nodes[1]!.kind).toBe("scripts_target");
+    expect(ast.nodes[1]).toMatchObject({ kind: "literal", value: " " });
+    expect(ast.nodes[2]!.kind).toBe("scripts_target");
   });
 
   it("parses @slot definitions", () => {

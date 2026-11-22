@@ -74,8 +74,6 @@ export class Parser {
   parse(): TemplateNode {
     const nodes: AstNode[] = [];
     while (!this.isAtEnd()) {
-      this.skipSpace();
-      if (this.isAtEnd()) break;
       nodes.push(this.parseNode());
     }
     return {

@@ -36,7 +36,7 @@ describe("template composition", () => {
       '@import { Card } from "./card.stn" @render Card({ title: title })',
     );
     const result = await engine.render("pages/index.stn", { title: "<Ada>", private: "secret" });
-    expect(result.html).toBe("<article>&lt;Ada&gt;|isolated</article>");
+    expect(result.html).toBe(" <article>&lt;Ada&gt;|isolated</article>");
     expect(result.errors).toHaveLength(0);
   });
 

@@ -3,6 +3,13 @@ import { readFileSync } from "node:fs";
 import { Engine } from "../src/engine/index";
 
 describe("literal markup", () => {
+  it("preserves spaces and line breaks around interpolation", async () => {
+    const result = await new Engine({ debug: false }).compileAndRender(
+      "  {{ name }} / stncil\n{{ name }} {{ name }}  ",
+      { name: "Ada" },
+    );
+    expect(result.html).toBe("  Ada / stncil\nAda Ada  ");
+  });
   it("renders an empty template without an error", async () => {
     const result = await new Engine({ debug: false }).compileAndRender("");
     expect(result.html).toBe("");
