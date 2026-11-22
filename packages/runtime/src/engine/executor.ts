@@ -247,11 +247,13 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
     case "CSRF":
     case "DEBUG":
     case "TRANSLATE":
-    case "RENDER_PARTIAL":
-    case "SLOT_TARGET":
       break;
     case "ASYNC_BLOCK":
     case "PARALLEL_GROUP":
       throw new Error("Async templates require renderAsync() or renderStream()");
+    case "LAYOUT":
+    case "RENDER_PARTIAL":
+    case "SLOT_TARGET":
+      throw new Error("Template composition requires renderAsync() or renderStream()");
   }
 }

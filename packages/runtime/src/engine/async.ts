@@ -1,4 +1,4 @@
-import type { IrInstruction } from "@stncil/core";
+import type { IrInstruction, IrDocument } from "@stncil/core";
 import { evalExpr } from "./eval";
 import { createExecutorState, execOne, type ExecutorState } from "./executor";
 import type { RenderContext } from "./context";
@@ -8,6 +8,15 @@ export type Fetcher = (...args: unknown[]) => unknown | Promise<unknown>;
 export interface RuntimeOptions {
   readonly fetchers?: Readonly<Record<string, Fetcher>>;
   readonly signal?: AbortSignal;
+  readonly resolveTemplate?: (path: string, fromFile: string) => Promise<IrDocument>;
+  readonly maxTemplateDepth?: number;
+}
+
+interface PlanOptions extends RuntimeOptions {
+  readonly signal: AbortSignal;
+  readonly sourceFile: string;
+  readonly templateDepth: number;
+  readonly slots?: ReadonlyMap<string, (depth: number) => Promise<string>>;
 }
 
 export type RenderChunk = string | Promise<string>;
@@ -49,7 +58,7 @@ export function createRenderPlan(
   instructions: readonly IrInstruction[],
   context: RenderContext,
   state: ExecutorState,
-  options: RuntimeOptions & { readonly signal: AbortSignal },
+  options: PlanOptions,
 ): RenderChunk[] {
   options.signal.throwIfAborted();
   const scope: RenderContext = Object.assign(Object.create(null), context);
@@ -144,6 +153,66 @@ export function createRenderPlan(
       case "PARALLEL_GROUP":
         appendPlan(createRenderPlan(instruction.blocks, scope, state, options));
         break;
+      case "LAYOUT":
+      case "RENDER_PARTIAL": {
+        const resolver = options.resolveTemplate;
+        if (!resolver) throw new Error(`No template resolver for "${instruction.template}"`);
+        if (options.templateDepth >= (options.maxTemplateDepth ?? 32)) {
+          throw new Error("Template composition depth limit exceeded");
+        }
+        const snapshot: RenderContext = Object.assign(Object.create(null), scope);
+        const childState = cloneState(state);
+        const props: RenderContext = Object.create(null);
+        const slots = new Map<string, (depth: number) => Promise<string>>();
+        if (instruction.op === "LAYOUT") {
+          for (const [name, body] of Object.entries(instruction.slots)) {
+            let rendered: Promise<string> | undefined;
+            slots.set(
+              name,
+              (depth) =>
+                (rendered ??= joinChunks(
+                  createRenderPlan(body, snapshot, cloneState(childState), {
+                    ...options,
+                    templateDepth: depth,
+                  }),
+                )),
+            );
+          }
+        } else {
+          for (const spread of instruction.spreads ?? []) {
+            const value = evalExpr(spread, snapshot);
+            if (value == null || typeof value !== "object" || Array.isArray(value)) {
+              throw new TypeError("Partial prop spread requires an object");
+            }
+            Object.assign(props, value);
+          }
+          for (const [name, expr] of Object.entries(instruction.props))
+            props[name] = evalExpr(expr, snapshot);
+        }
+        const work = resolver(instruction.template, options.sourceFile).then((document) =>
+          joinChunks(
+            createRenderPlan(
+              document.instructions,
+              instruction.op === "LAYOUT" ? snapshot : props,
+              childState,
+              {
+                ...options,
+                sourceFile: document.sourceFile,
+                templateDepth: options.templateDepth + 1,
+                slots,
+              },
+            ),
+          ),
+        );
+        append(awaitWithSignal(work, options.signal));
+        break;
+      }
+      case "SLOT_TARGET": {
+        const renderSlot = options.slots?.get(instruction.name);
+        if (renderSlot) append(renderSlot(options.templateDepth));
+        else appendPlan(createRenderPlan(instruction.defaultBody ?? [], scope, state, options));
+        break;
+      }
       case "BOUNDARY": {
         const fallback = (error: unknown) => {
           options.signal.throwIfAborted();

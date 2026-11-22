@@ -72,6 +72,7 @@ export type IrInstruction =
   | HeadTargetInstruction
   | CsrfInstruction
   | RenderPartialInstruction
+  | LayoutInstruction
   | SlotTargetInstruction
   | RecursiveDefInstruction
   | RecursiveCallInstruction
@@ -247,6 +248,13 @@ export interface RenderPartialInstruction extends BaseInstruction {
   readonly op: "RENDER_PARTIAL";
   readonly template: string;
   readonly props: Record<string, IrExpr>;
+  readonly spreads?: readonly IrExpr[];
+}
+
+export interface LayoutInstruction extends BaseInstruction {
+  readonly op: "LAYOUT";
+  readonly template: string;
+  readonly slots: Readonly<Record<string, readonly IrInstruction[]>>;
 }
 
 export interface SlotTargetInstruction extends BaseInstruction {

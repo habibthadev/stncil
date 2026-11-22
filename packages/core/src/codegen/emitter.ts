@@ -32,6 +32,7 @@ export class Emitter {
   private scopeHash: string;
   private debugMode: boolean;
   private inScriptBlock = false;
+  private imports = new Map<string, string>();
 
   constructor(
     sourceFile: string,
@@ -109,7 +110,8 @@ export class Emitter {
         this.emitSlotDef(node);
         break;
       case "import":
-        break; // resolved at compile time
+        for (const name of node.names) this.imports.set(name, node.path);
+        break;
       case "render":
         this.emitRender(node);
         break;
@@ -392,19 +394,14 @@ export class Emitter {
     slots: { name: string; body: AstNode[] }[];
     span: Span;
   }): void {
-    for (const slot of node.slots) {
-      this.emitSlotContent(slot);
-    }
-  }
-
-  private emitSlotContent(slot: { name: string; body: AstNode[] }): void {
     this.instructions.push({
-      op: "SLOT_TARGET",
-      name: slot.name,
-      defaultBody: null,
+      op: "LAYOUT",
+      template: node.path,
+      slots: Object.fromEntries(
+        node.slots.map((slot) => [slot.name, this.emitInstructionsForNodes(slot.body)]),
+      ),
       nodeId: nextNodeId(),
     });
-    this.emitNodes(slot.body);
   }
 
   private emitSlotDef(node: { name: string; defaultBody: AstNode[] | null; span: Span }): void {
@@ -428,16 +425,20 @@ export class Emitter {
     name: string;
     props: { kind: string; name: string; value?: ExprNode; span?: Span }[];
   }): void {
-    const props: Record<string, IrExpr> = {};
+    const props: Record<string, IrExpr> = Object.create(null);
+    const spreads: IrExpr[] = [];
     for (const prop of node.props) {
       if (prop.kind === "named" && prop.value) {
         props[prop.name] = this.exprToIrExpr(prop.value);
+      } else if (prop.kind === "spread") {
+        spreads.push({ kind: "path", segments: [prop.name] });
       }
     }
     this.instructions.push({
       op: "RENDER_PARTIAL",
-      template: node.name,
+      template: this.imports.get(node.name) ?? node.name,
       props,
+      spreads,
       nodeId: nextNodeId(),
     });
   }

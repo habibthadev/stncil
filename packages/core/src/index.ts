@@ -34,7 +34,7 @@ export {
   AsyncBlockInstruction, ParallelGroupInstruction, CacheBlockInstruction,
   BoundaryInstruction, HeadPushInstruction, StyleBlockInstruction,
   StylesTargetInstruction, ScriptBlockInstruction, ScriptsTargetInstruction,
-  HeadTargetInstruction, CsrfInstruction, RenderPartialInstruction,
+  HeadTargetInstruction, CsrfInstruction, RenderPartialInstruction, LayoutInstruction,
   SlotTargetInstruction, RecursiveDefInstruction, RecursiveCallInstruction,
   TranslateInstruction, DebugInstruction, IrFilter, IrBinaryOp, IrUnaryOp,
   IrCacheKeyPart, SourceMap, SourceLocation,

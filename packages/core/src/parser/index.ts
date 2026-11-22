@@ -669,7 +669,10 @@ export class Parser {
 
   private parseLayout(): LayoutNode {
     const tok = this.advance();
+    this.skipSpace();
+    const parentheses = this.match("LPAREN");
     const pathTok = this.consume("STRING", "Expected layout path string");
+    if (parentheses) this.consume("RPAREN", "Expected ) after layout path");
     this.consume("LBRACE", "Expected { for @layout body");
     const slots = this.parseSlotContents();
     this.consume("RBRACE", "Expected } after @layout body");
@@ -681,7 +684,7 @@ export class Parser {
     while (!this.check("RBRACE") && !this.isAtEnd()) {
       if (this.check("SLOT")) {
         const slotTok = this.advance();
-        const nameTok = this.consume("IDENTIFIER", "Expected slot name");
+        const nameTok = this.parseSlotName();
         this.consume("LBRACE", "Expected { for slot content");
         const body = this.parseBlockBody("RBRACE");
         this.consume("RBRACE", "Expected } after slot content");
@@ -697,13 +700,25 @@ export class Parser {
 
   private parseSlotDef(): SlotDefNode {
     const tok = this.advance();
-    const nameTok = this.consume("IDENTIFIER", "Expected slot name");
+    const nameTok = this.parseSlotName();
     let defaultBody: AstNode[] | null = null;
+    this.skipSpace();
     if (this.match("LBRACE")) {
       defaultBody = this.parseBlockBody("RBRACE");
       this.consume("RBRACE", "Expected } after slot default");
     }
     return { kind: "slot_def", name: nameTok.value, defaultBody, span: tok.span };
+  }
+
+  private parseSlotName(): Token {
+    this.skipSpace();
+    const parentheses = this.match("LPAREN");
+    this.skipSpace();
+    const name = this.advance();
+    if (name.type !== "IDENTIFIER" && name.type !== "STRING")
+      throw this.error("Expected slot name", name.span);
+    if (parentheses) this.consume("RPAREN", "Expected ) after slot name");
+    return name;
   }
 
   private parseImport(): ImportNode {
@@ -727,7 +742,9 @@ export class Parser {
     const nameTok = this.consume("IDENTIFIER", "Expected component name after @render");
     const props: RenderProp[] = [];
     if (this.match("LPAREN")) {
+      this.skipSpace();
       if (this.match("LBRACE")) {
+        this.skipSpace();
         if (!this.check("RBRACE")) {
           props.push(this.parseRenderProp());
           while (this.match("COMMA")) {

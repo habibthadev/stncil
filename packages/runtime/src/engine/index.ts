@@ -13,6 +13,9 @@ function requiresAsync(instructions: readonly IrInstruction[]): boolean {
     switch (instruction.op) {
       case "ASYNC_BLOCK":
       case "PARALLEL_GROUP":
+      case "LAYOUT":
+      case "RENDER_PARTIAL":
+      case "SLOT_TARGET":
         return true;
       case "IF":
         return (
@@ -41,6 +44,12 @@ export class RuntimeEngine {
     doc: IrDocument,
     private readonly options: RuntimeOptions = {},
   ) {
+    if (
+      options.maxTemplateDepth !== undefined &&
+      (!Number.isSafeInteger(options.maxTemplateDepth) || options.maxTemplateDepth < 1)
+    ) {
+      throw new RangeError("Template depth must be a positive safe integer");
+    }
     this.doc = doc;
     this.needsAsync = requiresAsync(doc.instructions);
   }
@@ -55,6 +64,8 @@ export class RuntimeEngine {
       const chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(), {
         ...this.options,
         signal: controller.signal,
+        sourceFile: this.doc.sourceFile,
+        templateDepth: 0,
       });
       return { html: await joinChunks(chunks), errors: [] };
     } catch (error) {
@@ -94,6 +105,8 @@ export class RuntimeEngine {
           chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(), {
             ...this.options,
             signal: controller.signal,
+            sourceFile: this.doc.sourceFile,
+            templateDepth: 0,
           })[Symbol.iterator]();
         } catch (error) {
           finished = true;

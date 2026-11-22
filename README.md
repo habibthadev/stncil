@@ -159,6 +159,13 @@ they do not send DOM replacement scripts for `@loading` bodies.
 }
 ```
 
+Register layout and partial templates with `engine.registerTemplate(path, source)`
+or provide a filesystem adapter. Import aliases resolve relative to the calling
+template: `@import { Card } from "./card.stn"`, then `@render Card({ title: title })`.
+Partials receive their explicit props; they do not inherit the caller's data.
+Named props override spread props. Composition is limited to 32 levels by
+default; `maxTemplateDepth` accepts a positive safe integer.
+
 ### Style and Script Blocks
 
 ```stncil
