@@ -84,6 +84,7 @@ export type TokenType =
 export interface Token {
   readonly type: TokenType;
   readonly value: string;
+  readonly raw?: string;
   readonly span: Span;
   readonly trimStart?: boolean;
   readonly trimEnd?: boolean;

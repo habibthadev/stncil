@@ -27,6 +27,7 @@ const BINARY_OPS: Record<string, { prec: number; op: BinaryOp }> = {
 
 export class Parser {
   private pos = 0;
+  private lineBoundExpression = false;
 
   constructor(private readonly tokens: Token[]) {}
 
@@ -219,7 +220,7 @@ export class Parser {
     let lastSpan = firstSpan;
     while (!this.isAtEnd() && this.contentTokens.has(this.peek().type)) {
       const tok = this.advance();
-      value += tok.value;
+      value += tok.raw ?? tok.value;
       lastSpan = tok.span;
     }
     return { kind: "literal", value, span: { start: firstSpan.start, end: lastSpan.end, line: firstSpan.line, col: firstSpan.col } };
@@ -278,7 +279,7 @@ export class Parser {
     const elseIfs: { condition: ExprNode; body: AstNode[] }[] = [];
     let alternate: AstNode[] | null = null;
 
-    this.skipSpace();
+    this.skipSpaceBefore("ELSE_IF", "ELSE");
     while (this.check("ELSE_IF")) {
       const eiTok = this.advance();
       this.consume("LPAREN", "Expected ( after @else if");
@@ -288,10 +289,10 @@ export class Parser {
       const eiBody = this.parseBlockBody("RBRACE");
       this.consume("RBRACE", "Expected } after @else if body");
       elseIfs.push({ condition: eiCond, body: eiBody });
-      this.skipSpace();
+      this.skipSpaceBefore("ELSE_IF", "ELSE");
     }
 
-    this.skipSpace();
+    this.skipSpaceBefore("ELSE");
     if (this.check("ELSE")) {
       this.advance();
       this.consume("LBRACE", "Expected { for @else body");
@@ -412,7 +413,14 @@ export class Parser {
     const tok = this.advance();
     const nameTok = this.consume("IDENTIFIER", "Expected variable name after @let");
     this.consume("EQUALS", "Expected = after @let variable name");
-    const value = this.parseExpr();
+    const previous = this.lineBoundExpression;
+    this.lineBoundExpression = true;
+    let value: ExprNode;
+    try {
+      value = this.parseExpr();
+    } finally {
+      this.lineBoundExpression = previous;
+    }
     return { kind: "let", name: nameTok.value, value, span: tok.span };
   }
 
@@ -667,8 +675,12 @@ export class Parser {
     let depth = 1;
     while (!this.isAtEnd() && depth > 0) {
       if (this.check("LBRACE")) { css += "{"; this.advance(); depth++; }
-      else if (this.check("RBRACE")) { css += "}"; this.advance(); depth--; }
-      else { css += this.advance().value; }
+      else if (this.check("RBRACE")) {
+        this.advance();
+        depth--;
+        if (depth > 0) css += "}";
+      }
+      else { const token = this.advance(); css += token.raw ?? token.value; }
     }
     if (depth !== 0) throw this.error("Expected } after @style body");
     return { kind: "style_block", css, critical, span: tok.span };
@@ -789,6 +801,7 @@ export class Parser {
     let left = this.parseUnary();
     while (true) {
       while (this.check("LITERAL") && this.peek().value.trim() === "") {
+        if (this.lineBoundExpression && this.peek().value.includes("\n")) break;
         this.advance();
       }
       const opInfo = BINARY_OPS[this.peek().value];
@@ -817,6 +830,7 @@ export class Parser {
 
   private parsePrimary(): ExprNode {
     while (this.check("LITERAL") && this.peek().value.trim() === "") {
+        if (this.lineBoundExpression && this.peek().value.includes("\n")) break;
       this.advance();
     }
     if (this.check("STRING")) {
@@ -893,6 +907,12 @@ export class Parser {
     while (!this.isAtEnd() && this.check("LITERAL") && this.peek().value.trim() === "") {
       this.advance();
     }
+  }
+
+  private skipSpaceBefore(...types: TokenType[]): void {
+    const position = this.pos;
+    this.skipSpace();
+    if (!types.some(type => this.check(type))) this.pos = position;
   }
 
   private consume(type: TokenType, message: string): Token {

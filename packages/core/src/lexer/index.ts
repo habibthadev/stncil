@@ -48,19 +48,34 @@ const TRIM_KEYWORDS: Record<string, TokenType> = {
   "script": "TRIM_SCRIPT",
 };
 
+const HEADER_KEYWORDS = new Set<TokenType>([
+  "OUTPUT", "CONTEXT", "IF", "ELSE_IF", "EACH", "ASYNC", "LET", "CACHE",
+  "LAYOUT", "SLOT", "IMPORT", "RENDER", "RECURSIVE", "RECURSE", "META",
+  "CANONICAL", "STYLE", "SCRIPT", "ASSET", "JSON", "T", "ERROR", "FALLBACK",
+  "TRIM_IF", "TRIM_EACH", "TRIM_ASYNC", "TRIM_CACHE", "TRIM_STYLE", "TRIM_SCRIPT",
+]);
+
 export class Lexer {
   private pos = 0;
   private line = 1;
   private col = 1;
   private tokens: Token[] = [];
   private inInterpolation = false;
+  private header: TokenType | null = null;
+  private headerParens = 0;
+  private headerBraces = 0;
+  private styleDepth = 0;
 
   constructor(private readonly source: string) {}
 
   tokenize(): Token[] {
     while (this.pos < this.source.length) {
       if (this.match("@*")) {
-        this.readBlockComment();
+        this.readBlockComment("*@");
+        continue;
+      }
+      if (this.match("{#")) {
+        this.readBlockComment("#}");
         continue;
       }
       if (this.peek() === "@") {
@@ -70,16 +85,19 @@ export class Lexer {
       if (this.match("{{{")) {
         this.addToken("INTERP_OPEN_RAW", "{{{");
         this.inInterpolation = true;
+        this.header = null;
         continue;
       }
       if (this.match("{{-")) {
         this.addToken("INTERP_OPEN_TRIM", "{{-");
         this.inInterpolation = true;
+        this.header = null;
         continue;
       }
       if (this.match("{{")) {
         this.addToken("INTERP_OPEN", "{{");
         this.inInterpolation = true;
+        this.header = null;
         continue;
       }
       if (this.inInterpolation) {
@@ -116,18 +134,47 @@ export class Lexer {
         this.addToken("NUMBER", this.readNumber());
         continue;
       }
-      if (this.peek() === '"') {
-        this.addToken("STRING", this.readString());
+      if (this.peek() === '"' || this.peek() === "'") {
+        if (this.inInterpolation || this.header !== null || this.styleDepth > 0) {
+          const start = this.pos;
+          const line = this.line;
+          const col = this.col;
+          const value = this.readString();
+          this.tokens.push({ type: "STRING", value, raw: this.source.slice(start, this.pos),
+            span: this.makeSpan(start, this.pos, line, col) });
+          if (this.header === "IMPORT") this.header = null;
+        } else {
+          this.addToken("LITERAL", this.peek());
+          this.pos++;
+          this.col++;
+        }
         continue;
       }
       if (this.match("-@if")) {
         this.addToken("TRIM_CLOSE_IF", "-@if");
         continue;
       }
-      if (this.peek() === "(") { this.addToken("LPAREN", "("); this.pos++; this.col++; continue; }
-      if (this.peek() === ")") { this.addToken("RPAREN", ")"); this.pos++; this.col++; continue; }
+      if (this.peek() === "(") {
+        if (this.header !== null) this.headerParens++;
+        this.addToken("LPAREN", "("); this.pos++; this.col++; continue;
+      }
+      if (this.peek() === ")") {
+        if (this.header !== null && --this.headerParens === 0 && this.header !== "LET") {
+          this.header = null;
+        }
+        this.addToken("RPAREN", ")"); this.pos++; this.col++; continue;
+      }
       if (this.peek() === "{" && this.source[this.pos + 1] !== "{") {
         if (!this.inInterpolation) {
+          if (this.styleDepth > 0) this.styleDepth++;
+          if (this.header !== null) {
+            if (this.headerParens > 0 || ["CONTEXT", "IMPORT", "LET"].includes(this.header)) {
+              this.headerBraces++;
+            } else {
+              if (this.header === "STYLE" || this.header === "TRIM_STYLE") this.styleDepth = 1;
+              this.header = null;
+            }
+          }
           this.addToken("LBRACE", "{"); this.pos++; this.col++; continue;
         }
         this.addToken("LITERAL", "{"); this.pos++; this.col++; continue;
@@ -139,6 +186,10 @@ export class Lexer {
             // }} should be handled above
           }
           this.addToken("LITERAL", "}"); this.pos++; this.col++; continue;
+        }
+        if (this.styleDepth > 0) this.styleDepth--;
+        if (this.headerBraces > 0 && --this.headerBraces === 0 && this.header === "CONTEXT") {
+          this.header = null;
         }
         this.addToken("RBRACE", "}"); this.pos++; this.col++; continue;
       }
@@ -167,13 +218,17 @@ export class Lexer {
     return this.tokens;
   }
 
-  private readBlockComment(): void {
+  private readBlockComment(close: string): void {
+    const start = this.pos - 2;
+    const line = this.line;
+    const col = this.col - 2;
     while (this.pos < this.source.length) {
-      if (this.match("*@")) return;
-      if (this.peek() === "\n") { this.line++; this.col = 1; }
+      if (this.match(close)) return;
+      if (this.peek() === "\n") { this.line++; this.col = 0; }
       this.pos++;
       this.col++;
     }
+    throw new LexError("Unclosed template comment", this.makeSpan(start, this.pos, line, col));
   }
 
   private readSigil(): void {
@@ -188,6 +243,12 @@ export class Lexer {
     }
 
     const ch = this.peek();
+    if (ch === "@") {
+      this.pos++;
+      this.col++;
+      this.addTokenSpan("LITERAL", "@", start, startLine, startCol);
+      return;
+    }
     if (ch === "{" || ch === "*" || ch === "}") {
       this.addTokenSpan("LITERAL", "@", start, startLine, startCol);
       return;
@@ -201,6 +262,10 @@ export class Lexer {
     }
 
     const name = this.readIdentifier();
+    if (this.styleDepth > 0 || (start > 0 && /[a-zA-Z0-9._%+-]/.test(this.source[start - 1]!) && this.peek() === ".")) {
+      this.addTokenSpan("LITERAL", `@${name}`, start, startLine, startCol);
+      return;
+    }
     if (name === "") {
       throw new LexError("Unknown sigil starting with @", this.makeSpan(start, this.pos, startLine, startCol));
     }
@@ -217,7 +282,7 @@ export class Lexer {
     }
 
     if (trimStart) {
-      const trimType = TRIM_KEYWORDS[name];
+      const trimType = Object.hasOwn(TRIM_KEYWORDS, name) ? TRIM_KEYWORDS[name] : undefined;
       if (trimType) {
         this.addTokenSpan(trimType, `@-${name}`, start, startLine, startCol);
         return;
@@ -233,10 +298,10 @@ export class Lexer {
       this.col++;
     }
 
-    const keywordType = KEYWORDS[name];
+    const keywordType = Object.hasOwn(KEYWORDS, name) ? KEYWORDS[name] : undefined;
     if (keywordType) {
       if (trimSuffix) {
-        const trimType = TRIM_KEYWORDS[name];
+        const trimType = Object.hasOwn(TRIM_KEYWORDS, name) ? TRIM_KEYWORDS[name] : undefined;
         if (trimType) {
           this.addTokenSpan(trimType, `@${name}-`, start, startLine, startCol);
           return;
@@ -298,14 +363,16 @@ export class Lexer {
     const startCol = this.col;
     while (this.pos < this.source.length) {
       const ch = this.peek();
-      if (this.startsWith("@*") || this.startsWith("{{-") || this.startsWith("{{") || this.startsWith("-@if")) break;
+      if (this.startsWith("@*") || this.startsWith("{#") || this.startsWith("{{-") || this.startsWith("{{") || this.startsWith("-@if")) break;
       if (ch === "@") {
-        const next = this.pos + 1 < this.source.length ? this.source[this.pos + 1] : "";
-        if (next && /[a-zA-Z_-]/.test(next)) break;
+        break;
       }
-      if (/[a-zA-Z0-9_"]/.test(ch)) break;
+      if (/[a-zA-Z0-9_"']/.test(ch)) break;
       if ("{}()<>,:?|!;=-.".indexOf(ch) !== -1 || this.startsWith("||") || this.startsWith("&&") || this.startsWith("...")) break;
-      if (ch === "\n") { this.line++; this.col = 1; }
+      if (ch === "\n") {
+        this.line++; this.col = 1;
+        if (this.headerParens === 0 && this.headerBraces === 0) this.header = null;
+      }
       else { this.col++; }
       this.pos++;
     }
@@ -336,6 +403,10 @@ export class Lexer {
   }
 
   private readString(): string {
+    const quote = this.peek();
+    const start = this.pos;
+    const line = this.line;
+    const col = this.col;
     let str = "";
     this.pos++; // skip opening "
     this.col++;
@@ -351,17 +422,18 @@ export class Lexer {
         }
         continue;
       }
-      if (this.peek() === '"') {
+      if (this.peek() === quote) {
         this.pos++;
         this.col++;
         return str;
       }
 
       str += this.peek();
+      if (this.peek() === "\n") { this.line++; this.col = 0; }
       this.pos++;
       this.col++;
     }
-    return str;
+    throw new LexError("Unclosed string", this.makeSpan(start, this.pos, line, col));
   }
 
   private startsWith(s: string): boolean {
@@ -392,6 +464,11 @@ export class Lexer {
   }
 
   private addTokenSpan(type: TokenType, value: string, start: number, startLine: number, startCol: number): void {
+    if (HEADER_KEYWORDS.has(type)) {
+      this.header = type;
+      this.headerParens = 0;
+      this.headerBraces = 0;
+    }
     this.tokens.push(token(type, value, {
       start,
       end: this.pos,
