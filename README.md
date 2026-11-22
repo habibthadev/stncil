@@ -20,10 +20,10 @@ Core and runtime use web-standard APIs. The high-level loader accepts a filesyst
 adapter. This repository supplies a JavaScript runtime; it does not yet supply
 runtime ports for Python, Go, or other languages.
 
-See [the engine comparison](docs/engine-comparison.md) for implementation evidence,
-measurements, and current limits. Head collection, script directives, translation,
-and fragment caching remain incomplete and are not part of the supported feature
-list above.
+The [comparison script](scripts/compare-engines.mjs) measures compiled rendering
+against reference engines. Head collection, script directives, translation, and
+fragment caching remain incomplete and are not part of the supported feature list
+above.
 
 ## Packages
 
@@ -291,8 +291,7 @@ pnpm examples:http
 pnpm examples:preview
 ```
 
-The preview server reads the generated HTML in `.stncil-examples/`. See
-[the example audit](docs/example-audit.md) and [the design rules](apps/examples/DESIGN.md).
+The preview server reads the generated HTML in `.stncil-examples/`.
 Fonts load through the CDN; no font binaries are bundled.
 
 ## Editor Support

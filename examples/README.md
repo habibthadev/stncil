@@ -24,7 +24,7 @@ memory; restarting them restores the demonstration data.
 
 The examples share the design in `apps/examples/shared/design.scss`. Build its CSS
 with `pnpm --filter example-link-shortener build:css`. Fonts load from the CDN;
-control icons are local. The full rules are in `apps/examples/DESIGN.md`.
+control icons are local.
 
 To render, check, and preview all examples:
 
