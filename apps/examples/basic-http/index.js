@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Engine } from "stncil";
+import { HttpError, requestUrl, sendHtml, sendError } from "../shared/http.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -43,22 +44,27 @@ const greetings = [
 
 async function renderPage(templateName, context) {
   const source = readTemplate(templateName);
-  const contentResult = await engine.compileAndRender(source, context);
-  if (contentResult.errors.length > 0) {
-    console.error("Template errors:", contentResult.errors);
-  }
-  const layoutSource = readTemplate("views/layout.stn");
-  const layoutResult = await engine.compileAndRender(layoutSource, {
-    ...context,
-    content: contentResult.html,
-    year: startedAt.getFullYear(),
+  const contentResult = await engine.compileAndRender(source, context, {
+    sourceFile: path.join(__dirname, templateName),
   });
+  if (contentResult.errors.length > 0) throw contentResult.errors[0];
+  const layoutSource = readTemplate("views/layout.stn");
+  const layoutResult = await engine.compileAndRender(
+    layoutSource,
+    {
+      ...context,
+      content: contentResult.html,
+      year: startedAt.getFullYear(),
+    },
+    { sourceFile: path.join(__dirname, "views/layout.stn") },
+  );
+  if (layoutResult.errors.length > 0) throw layoutResult.errors[0];
   return layoutResult.html;
 }
 
 const server = http.createServer(async (req, res) => {
   try {
-    const url = new URL(req.url, `http://${req.headers.host}`);
+    const url = requestUrl(req);
     const pathname = url.pathname;
 
     if (pathname === "/" || pathname === "") {
@@ -70,11 +76,10 @@ const server = http.createServer(async (req, res) => {
         posts,
         started_at: startedAt,
       });
-      res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(html);
-
+      sendHtml(res, 200, html);
     } else if (pathname === "/hello") {
       const name = url.searchParams.get("name") || "World";
+      if (name.length > 120) throw new HttpError(400, "Names must be at most 120 characters");
       const greeting = greetings[Math.floor(Math.random() * greetings.length)];
       const html = await renderPage("views/hello.stn", {
         title: `Hello, ${name}`,
@@ -86,29 +91,26 @@ const server = http.createServer(async (req, res) => {
         url: req.url,
         now: new Date(),
       });
-      res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(html);
-
+      sendHtml(res, 200, html);
     } else {
       const html = await renderPage("views/not-found.stn", {
         title: "404 Not Found",
         description: "Page not found.",
         path: pathname,
       });
-      res.writeHead(404, { "Content-Type": "text/html" });
-      res.end(html);
+      sendHtml(res, 404, html);
     }
   } catch (err) {
-    console.error("Server error:", err);
-    res.writeHead(500, { "Content-Type": "text/plain" });
-    res.end("Internal Server Error");
+    sendError(res, err);
   }
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}/`);
+const PORT = Number(process.env.PORT ?? 3000);
+server.requestTimeout = 30_000;
+server.headersTimeout = 10_000;
+server.listen(PORT, "127.0.0.1", () => {
+  console.log(`Server running at http://localhost:${server.address().port}/`);
   console.log("Try:");
   console.log("  http://localhost:3000/");
-  console.log('  http://localhost:3000/hello?name=Stncil');
+  console.log("  http://localhost:3000/hello?name=Stncil");
 });

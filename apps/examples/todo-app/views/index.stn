@@ -8,8 +8,9 @@
 }
 
 <form method="POST" action="/todos" class="todo-form">
-  <input type="text" name="title" placeholder="Write a task&hellip;" required autofocus />
-  <button type="submit" class="btn btn-sm">Add</button>
+  @csrf
+  <input type="text" name="title" aria-label="Task title" maxlength="240" placeholder="Write a task&hellip;" required />
+  <button type="submit" class="btn btn-sm">Add task</button>
 </form>
 
 <div class="todo-filters">
@@ -23,7 +24,8 @@
     @each (todo in todos) {
       <div class='todo-item'>
         <form method="POST" action='/todos/{{ todo.id }}/toggle' style="display: contents;">
-          <button type="submit" class='todo-check @if (todo.completed) { completed }' aria-label="Toggle complete">
+          @csrf
+          <button type="submit" class='todo-check @if (todo.completed) { completed }' aria-label="Toggle completion for {{ todo.title }}" aria-pressed="{{ todo.completed }}">
             @if (todo.completed) {
               <i data-lucide='check' style="width: 16px; height: 16px; stroke-width: 3;"></i>
             } @else {
@@ -40,6 +42,7 @@
             <i data-lucide='pencil' style="width: 15px; height: 15px; stroke-width: 2;"></i>
           </a>
           <form method="POST" action='/todos/{{ todo.id }}/delete' style="display: contents;">
+            @csrf
             <button type="submit" class="delete-btn" aria-label="Delete" onclick="return confirm('Delete this task?')">
               <i data-lucide='trash-2' style="width: 15px; height: 15px; stroke-width: 2;"></i>
             </button>

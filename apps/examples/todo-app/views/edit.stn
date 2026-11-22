@@ -1,9 +1,10 @@
 @if (todo) {
   <h1 style="margin-bottom: 1.5rem;">Edit Task</h1>
   <form method="POST" action='/todos/{{ todo.id }}/update' class="edit-form">
+    @csrf
     <div class="field">
       <label for="title">Title</label>
-      <input type="text" id="title" name="title" value='{{ todo.title }}' required autofocus />
+      <input type="text" id="title" name="title" value='{{ todo.title }}' maxlength="240" required autofocus />
     </div>
     <div class="actions">
       <a href="/" class="btn" style="background: transparent; color: var(--ink); border: 1px solid var(--border);">Cancel</a>

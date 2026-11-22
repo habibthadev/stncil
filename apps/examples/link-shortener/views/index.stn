@@ -26,13 +26,14 @@
 </div>
 
 <form method="POST" action="/links" class="link-form" data-validate="link" novalidate>
+  @csrf
   <div class="field">
     <label for="url">Destination URL</label>
-    <input type="text" id="url" name="url" placeholder="https://example.com/long-path..." />
+    <input type="text" id="url" name="url" maxlength="2048" placeholder="https://example.com/long-path..." />
   </div>
   <div class="field">
     <label for="slug">Short link (optional)</label>
-    <input type="text" id="slug" name="slug" placeholder="my-slug" />
+    <input type="text" id="slug" name="slug" maxlength="64" placeholder="my-slug" />
   </div>
   <button type="submit" class="btn btn-primary"><iconify-icon icon="hugeicons:plus-sign"></iconify-icon> Shorten</button>
 </form>

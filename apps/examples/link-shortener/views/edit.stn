@@ -9,9 +9,10 @@
   }
 
   <form method="POST" action='/links/{{ link.id }}/update' class="edit-form" data-validate="edit" novalidate>
+    @csrf
     <div class="field">
       <label for="url">Destination URL</label>
-      <input type="text" id="url" name="url" value='{{ link.url }}' />
+      <input type="text" id="url" name="url" value='{{ link.url }}' maxlength="2048" />
     </div>
     <div class="field">
       <label for="slug">Short link</label>
@@ -20,7 +21,7 @@
     </div>
     <div class="field">
       <label for="title">Label</label>
-      <input type="text" id="title" name="title" value='{{ link.title }}' />
+      <input type="text" id="title" name="title" value='{{ link.title }}' maxlength="240" />
     </div>
     <div class="actions">
       <a href="/" class="btn btn-ghost">Cancel</a>
