@@ -1,11 +1,21 @@
 import type {
-  IrInstruction, IrDocument, IrExpr,
-  WriteLiteralInstruction, WriteEscapedInstruction,
-  WriteUrlEscapedInstruction, WriteCssEscapedInstruction,
-  WriteTrustedInstruction, WriteFilterInstruction, WriteJsonInstruction,
-  IfInstruction, EachInstruction, LetInstruction,
-  BoundaryInstruction, CacheBlockInstruction,
-  RecursiveDefInstruction, RecursiveCallInstruction,
+  IrInstruction,
+  IrDocument,
+  IrExpr,
+  WriteLiteralInstruction,
+  WriteEscapedInstruction,
+  WriteUrlEscapedInstruction,
+  WriteCssEscapedInstruction,
+  WriteTrustedInstruction,
+  WriteFilterInstruction,
+  WriteJsonInstruction,
+  IfInstruction,
+  EachInstruction,
+  LetInstruction,
+  BoundaryInstruction,
+  CacheBlockInstruction,
+  RecursiveDefInstruction,
+  RecursiveCallInstruction,
   StyleBlockInstruction,
 } from "@stncil/core";
 import { resolvePath, type RenderContext } from "./context";
@@ -56,7 +66,8 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
 
     case "WRITE_EXPRESSION": {
       const value = evalExpr(inst.expr, ctx);
-      state.output += inst.escape === "raw" ? (value == null ? "" : String(value)) : escapeHtml(value);
+      state.output +=
+        inst.escape === "raw" ? (value == null ? "" : String(value)) : escapeHtml(value);
       break;
     }
 
@@ -142,9 +153,16 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
         for (let i = 0; i < arr.length; i++) {
           const loopCtx: RenderContext = {
             ...ctx,
-            loop: { index: i + 1, index0: i, first: i === 0, last: i === arr.length - 1,
-              length: arr.length, revindex: arr.length - i, revindex0: arr.length - i - 1,
-              parent: ctx.loop ?? null },
+            loop: {
+              index: i + 1,
+              index0: i,
+              first: i === 0,
+              last: i === arr.length - 1,
+              length: arr.length,
+              revindex: arr.length - i,
+              revindex0: arr.length - i - 1,
+              parent: ctx.loop ?? null,
+            },
             [ei.as]: arr[i],
           };
           if (ei.indexAs) {

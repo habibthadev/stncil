@@ -101,8 +101,17 @@ export type ExprNode =
   | TernaryExprNode
   | FilterChainNode
   | { readonly kind: "array"; readonly items: ExprNode[]; readonly span: Span }
-  | { readonly kind: "object"; readonly fields: { name: string; value: ExprNode }[]; readonly span: Span }
-  | { readonly kind: "index"; readonly object: ExprNode; readonly key: ExprNode; readonly span: Span };
+  | {
+      readonly kind: "object";
+      readonly fields: { name: string; value: ExprNode }[];
+      readonly span: Span;
+    }
+  | {
+      readonly kind: "index";
+      readonly object: ExprNode;
+      readonly key: ExprNode;
+      readonly span: Span;
+    };
 
 export interface PathExprNode {
   readonly kind: "path";
@@ -156,7 +165,21 @@ export interface TernaryExprNode {
   readonly span: Span;
 }
 
-export type BinaryOp = "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||" | "+" | "-" | "*" | "/" | "%" | "~";
+export type BinaryOp =
+  | "=="
+  | "!="
+  | "<"
+  | ">"
+  | "<="
+  | ">="
+  | "&&"
+  | "||"
+  | "+"
+  | "-"
+  | "*"
+  | "/"
+  | "%"
+  | "~";
 
 export interface IfNode extends BaseNode {
   readonly kind: "if";
@@ -202,9 +225,7 @@ export interface CacheBlockNode extends BaseNode {
   readonly body: AstNode[];
 }
 
-export type CacheKeyPart =
-  | { kind: "literal"; value: string }
-  | { kind: "expr"; expr: ExprNode };
+export type CacheKeyPart = { kind: "literal"; value: string } | { kind: "expr"; expr: ExprNode };
 
 export interface BoundaryNode extends BaseNode {
   readonly kind: "boundary";

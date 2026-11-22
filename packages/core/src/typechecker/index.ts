@@ -1,4 +1,11 @@
-import { AstNode, ExprNode, TypeExprNode, ContextFieldNode, OutputMode, BinaryExprNode } from "../parser/ast";
+import {
+  AstNode,
+  ExprNode,
+  TypeExprNode,
+  ContextFieldNode,
+  OutputMode,
+  BinaryExprNode,
+} from "../parser/ast";
 import { Span, TypeCheckError } from "../error";
 import { IrType } from "./types";
 import { Scope } from "./scope";
@@ -48,13 +55,19 @@ export class TypeChecker {
     };
   }
 
-  private processNodes(nodes: AstNode[], parentContext?: { inHead?: boolean; inScript?: boolean }): void {
+  private processNodes(
+    nodes: AstNode[],
+    parentContext?: { inHead?: boolean; inScript?: boolean },
+  ): void {
     for (const node of nodes) {
       this.processNode(node, parentContext);
     }
   }
 
-  private processNode(node: AstNode, parentContext?: { inHead?: boolean; inScript?: boolean }): void {
+  private processNode(
+    node: AstNode,
+    parentContext?: { inHead?: boolean; inScript?: boolean },
+  ): void {
     switch (node.kind) {
       case "output_mode":
         this.outputMode = node.mode;
@@ -142,12 +155,25 @@ export class TypeChecker {
     }
   }
 
-  private processInterp(node: { expr: ExprNode; escapeContext?: string; trimStart: boolean; trimEnd: boolean; span: Span }, parentContext?: { inHead?: boolean; inScript?: boolean }): void {
+  private processInterp(
+    node: {
+      expr: ExprNode;
+      escapeContext?: string;
+      trimStart: boolean;
+      trimEnd: boolean;
+      span: Span;
+    },
+    parentContext?: { inHead?: boolean; inScript?: boolean },
+  ): void {
     if (parentContext?.inScript && !this.inScriptBlock) {
       return;
     }
     if (this.inScriptBlock) {
-      this.addError("E015", "Raw {{ }} used inside @script block without | js or @json()", node.span);
+      this.addError(
+        "E015",
+        "Raw {{ }} used inside @script block without | js or @json()",
+        node.span,
+      );
       return;
     }
     this.validateExprType(node.expr, node.span);
@@ -159,7 +185,15 @@ export class TypeChecker {
     }
   }
 
-  private processIf(node: { condition: ExprNode; consequent: AstNode[]; elseIfs: { condition: ExprNode; body: AstNode[] }[]; alternate: AstNode[] | null; trimStart: boolean; trimEnd: boolean; span: Span }): void {
+  private processIf(node: {
+    condition: ExprNode;
+    consequent: AstNode[];
+    elseIfs: { condition: ExprNode; body: AstNode[] }[];
+    alternate: AstNode[] | null;
+    trimStart: boolean;
+    trimEnd: boolean;
+    span: Span;
+  }): void {
     this.validateExprType(node.condition, node.span);
 
     const consequentScope = narrowType(node.condition, this.scope, true);
@@ -192,20 +226,42 @@ export class TypeChecker {
     }
   }
 
-  private processEach(node: { itemName: string; indexName: string | null; source: ExprNode; body: AstNode[]; empty: AstNode[]; span: Span }): void {
+  private processEach(node: {
+    itemName: string;
+    indexName: string | null;
+    source: ExprNode;
+    body: AstNode[];
+    empty: AstNode[];
+    span: Span;
+  }): void {
     const sourceType = this.inferExprType(node.source);
     if (sourceType && sourceType.kind !== "array") {
       this.addError("E004", "Cannot iterate over non-array", node.span);
     }
     const parentLoop = this.scope.lookup("loop")?.type ?? { kind: "null" };
     this.scope.pushFrame();
-    this.scope.declare("loop", { kind: "object", fields: {
-      index: { kind: "number" }, index0: { kind: "number" }, length: { kind: "number" },
-      first: { kind: "boolean" }, last: { kind: "boolean" },
-      revindex: { kind: "number" }, revindex0: { kind: "number" },
-      parent: parentLoop,
-    } }, "each");
-    this.scope.declare(node.itemName, sourceType?.kind === "array" ? sourceType.item : { kind: "string" }, "each");
+    this.scope.declare(
+      "loop",
+      {
+        kind: "object",
+        fields: {
+          index: { kind: "number" },
+          index0: { kind: "number" },
+          length: { kind: "number" },
+          first: { kind: "boolean" },
+          last: { kind: "boolean" },
+          revindex: { kind: "number" },
+          revindex0: { kind: "number" },
+          parent: parentLoop,
+        },
+      },
+      "each",
+    );
+    this.scope.declare(
+      node.itemName,
+      sourceType?.kind === "array" ? sourceType.item : { kind: "string" },
+      "each",
+    );
     if (node.indexName) {
       this.scope.declare(node.indexName, { kind: "number" }, "each");
     }
@@ -213,7 +269,16 @@ export class TypeChecker {
     this.scope.popFrame();
   }
 
-  private processAsyncBlock(node: { binding: string; fetcher: string; args: ExprNode[]; body: AstNode[]; loading: AstNode[]; error: AstNode[]; errorBinding: string | null; span: Span }): void {
+  private processAsyncBlock(node: {
+    binding: string;
+    fetcher: string;
+    args: ExprNode[];
+    body: AstNode[];
+    loading: AstNode[];
+    error: AstNode[];
+    errorBinding: string | null;
+    span: Span;
+  }): void {
     if (this.inHeadBlock) {
       this.addError("E019", "@async block used inside @head block", node.span);
     }
@@ -225,7 +290,11 @@ export class TypeChecker {
     this.processNodes(node.loading);
     if (node.errorBinding) {
       this.scope.pushFrame();
-      this.scope.declare(node.errorBinding, { kind: "object", fields: { message: { kind: "string" } } }, "error");
+      this.scope.declare(
+        node.errorBinding,
+        { kind: "object", fields: { message: { kind: "string" } } },
+        "error",
+      );
       this.processNodes(node.error);
       this.scope.popFrame();
     } else {
@@ -242,7 +311,12 @@ export class TypeChecker {
     this.scope.declare(node.name, type ?? { kind: "string" }, "let");
   }
 
-  private processBoundary(node: { body: AstNode[]; errorBinding: string | null; fallback: AstNode[]; span: Span }): void {
+  private processBoundary(node: {
+    body: AstNode[];
+    errorBinding: string | null;
+    fallback: AstNode[];
+    span: Span;
+  }): void {
     if (this.boundaryDepth > 0) {
       this.addError("E020", "@boundary nested inside @boundary", node.span);
       return;
@@ -253,7 +327,11 @@ export class TypeChecker {
 
     if (node.errorBinding) {
       this.scope.pushFrame();
-      this.scope.declare(node.errorBinding, { kind: "object", fields: { message: { kind: "string" } } }, "error");
+      this.scope.declare(
+        node.errorBinding,
+        { kind: "object", fields: { message: { kind: "string" } } },
+        "error",
+      );
       this.processNodes(node.fallback);
       this.scope.popFrame();
     } else {
@@ -261,7 +339,11 @@ export class TypeChecker {
     }
   }
 
-  private processLayout(node: { path: string; slots: { name: string; body: AstNode[] }[]; span: Span }): void {
+  private processLayout(node: {
+    path: string;
+    slots: { name: string; body: AstNode[] }[];
+    span: Span;
+  }): void {
     this.isLayout = true;
     for (const slot of node.slots) {
       this.processNodes(slot.body);
@@ -292,11 +374,21 @@ export class TypeChecker {
 
   private processStylesTarget(): void {
     if (!this.isLayout) {
-      this.addError("E021", "@styles target used outside a layout template", { start: 0, end: 0, line: 0, col: 0 });
+      this.addError("E021", "@styles target used outside a layout template", {
+        start: 0,
+        end: 0,
+        line: 0,
+        col: 0,
+      });
     }
   }
 
-  private processScriptBlock(node: { scriptType: string; content: AstNode[]; attrType: string | null; span: Span }): void {
+  private processScriptBlock(node: {
+    scriptType: string;
+    content: AstNode[];
+    attrType: string | null;
+    span: Span;
+  }): void {
     if (this.outputMode === "text" || this.outputMode === "xml") {
       this.addError("E022", "@script used in text or XML output mode", node.span);
     }
@@ -304,7 +396,11 @@ export class TypeChecker {
     this.inScriptBlock = true;
     for (const child of node.content) {
       if (child.kind === "interp") {
-        this.addError("E015", `Raw {{ }} used inside @script block without | js or @json()`, child.span);
+        this.addError(
+          "E015",
+          `Raw {{ }} used inside @script block without | js or @json()`,
+          child.span,
+        );
       }
     }
     this.inScriptBlock = saved;
@@ -312,13 +408,23 @@ export class TypeChecker {
 
   private processScriptsTarget(): void {
     if (!this.isLayout) {
-      this.addError("E021", "@scripts target used outside a layout template", { start: 0, end: 0, line: 0, col: 0 });
+      this.addError("E021", "@scripts target used outside a layout template", {
+        start: 0,
+        end: 0,
+        line: 0,
+        col: 0,
+      });
     }
   }
 
   private processCsrf(): void {
     if (this.outputMode === "text" || this.outputMode === "xml") {
-      this.addError("E023", "@csrf used in text or XML output mode", { start: 0, end: 0, line: 0, col: 0 });
+      this.addError("E023", "@csrf used in text or XML output mode", {
+        start: 0,
+        end: 0,
+        line: 0,
+        col: 0,
+      });
     }
   }
 
@@ -368,16 +474,30 @@ export class TypeChecker {
       case "filter_chain":
         return this.inferExprType(expr.expr, errorSpan);
       case "array": {
-        const variants = expr.items.map(item => this.inferExprType(item, errorSpan)).filter((type): type is IrType => type !== null);
-        return { kind: "array", item: variants.length === 1 ? variants[0]! : { kind: "union", variants } };
+        const variants = expr.items
+          .map((item) => this.inferExprType(item, errorSpan))
+          .filter((type): type is IrType => type !== null);
+        return {
+          kind: "array",
+          item: variants.length === 1 ? variants[0]! : { kind: "union", variants },
+        };
       }
       case "object":
-        return { kind: "object", fields: Object.fromEntries(expr.fields.map(field => [field.name, this.inferExprType(field.value, errorSpan) ?? { kind: "null" }])) };
+        return {
+          kind: "object",
+          fields: Object.fromEntries(
+            expr.fields.map((field) => [
+              field.name,
+              this.inferExprType(field.value, errorSpan) ?? { kind: "null" },
+            ]),
+          ),
+        };
       case "index": {
         const object = this.inferExprType(expr.object, errorSpan);
         if (object?.kind === "array") return object.item;
         if (object?.kind === "record") return object.value;
-        if (object?.kind === "object" && expr.key.kind === "string") return object.fields[expr.key.value] ?? null;
+        if (object?.kind === "object" && expr.key.kind === "string")
+          return object.fields[expr.key.value] ?? null;
         return null;
       }
     }
@@ -385,14 +505,23 @@ export class TypeChecker {
 
   private inferBinaryType(expr: BinaryExprNode, errorSpan?: Span): IrType | null {
     switch (expr.op) {
-      case "==": case "!=":
-      case "<": case ">": case "<=": case ">=":
+      case "==":
+      case "!=":
+      case "<":
+      case ">":
+      case "<=":
+      case ">=":
         return { kind: "boolean" };
-      case "&&": case "||":
+      case "&&":
+      case "||":
         return { kind: "boolean" };
       case "~":
         return { kind: "string" };
-      case "+": case "-": case "*": case "/": case "%":
+      case "+":
+      case "-":
+      case "*":
+      case "/":
+      case "%":
         return { kind: "number" };
     }
   }
@@ -441,7 +570,7 @@ export class TypeChecker {
         return null;
       } else if (type.kind === "union") {
         // Find first object variant
-        const objVariant = type.variants.find(v => v.kind === "object");
+        const objVariant = type.variants.find((v) => v.kind === "object");
         if (objVariant && objVariant.kind === "object") {
           const field = objVariant.fields[segments[i]!];
           if (!field) {
@@ -456,7 +585,11 @@ export class TypeChecker {
         }
       } else {
         if (errorSpan) {
-          this.addError("E003", `Property "${segments[i]}" does not exist on ${type.kind}`, errorSpan);
+          this.addError(
+            "E003",
+            `Property "${segments[i]}" does not exist on ${type.kind}`,
+            errorSpan,
+          );
         }
         return null;
       }
@@ -466,13 +599,20 @@ export class TypeChecker {
 
   private typeExprToIrType(typeExpr: TypeExprNode): IrType {
     switch (typeExpr.kind) {
-      case "string":  return { kind: "string" };
-      case "number":  return { kind: "number" };
-      case "boolean": return { kind: "boolean" };
-      case "date":    return { kind: "date" };
-      case "null":    return { kind: "null" };
-      case "array":   return { kind: "array", item: this.typeExprToIrType(typeExpr.item) };
-      case "record":  return { kind: "record", value: this.typeExprToIrType(typeExpr.value) };
+      case "string":
+        return { kind: "string" };
+      case "number":
+        return { kind: "number" };
+      case "boolean":
+        return { kind: "boolean" };
+      case "date":
+        return { kind: "date" };
+      case "null":
+        return { kind: "null" };
+      case "array":
+        return { kind: "array", item: this.typeExprToIrType(typeExpr.item) };
+      case "record":
+        return { kind: "record", value: this.typeExprToIrType(typeExpr.value) };
       case "object": {
         const fields: Record<string, IrType> = {};
         for (const f of typeExpr.fields) {
@@ -483,10 +623,12 @@ export class TypeChecker {
         return { kind: "object", fields };
       }
       case "union": {
-        const variants = typeExpr.variants.map(v => this.typeExprToIrType(v));
-        if (variants.some(v => v.kind === "null")) {
-          const nonNull = variants.filter(v => v.kind !== "null");
-          return nonNull.length === 1 ? { kind: "nullable", inner: nonNull[0]! } : { kind: "union", variants };
+        const variants = typeExpr.variants.map((v) => this.typeExprToIrType(v));
+        if (variants.some((v) => v.kind === "null")) {
+          const nonNull = variants.filter((v) => v.kind !== "null");
+          return nonNull.length === 1
+            ? { kind: "nullable", inner: nonNull[0]! }
+            : { kind: "union", variants };
         }
         return { kind: "union", variants };
       }

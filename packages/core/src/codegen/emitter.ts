@@ -1,7 +1,16 @@
 import { AstNode, ExprNode, OutputMode, FilterNode, CacheKeyPart } from "../parser/ast";
 import {
-  IrDocument, IrInstruction, IrExpr, IrFilter, IrBinaryOp, IrUnaryOp, IrCacheKeyPart,
-  OutputMode as IrOutputMode, IrType, HeadContribution, WriteLiteralInstruction,
+  IrDocument,
+  IrInstruction,
+  IrExpr,
+  IrFilter,
+  IrBinaryOp,
+  IrUnaryOp,
+  IrCacheKeyPart,
+  OutputMode as IrOutputMode,
+  IrType,
+  HeadContribution,
+  WriteLiteralInstruction,
 } from "./ir";
 import { generateScopeHash } from "./scope-hash";
 import { Span } from "../error";
@@ -131,9 +140,11 @@ export class Emitter {
       case "asset":
         this.instructions.push({ op: "WRITE_ASSET", path: node.path, nodeId: nextNodeId() });
         break;
-      case "json": {
-        const jPath = this.exprToPath(node.expr);
-        if (jPath) this.instructions.push({ op: "WRITE_JSON", path: jPath, nodeId: nextNodeId() });
+      case "json":
+        {
+          const jPath = this.exprToPath(node.expr);
+          if (jPath)
+            this.instructions.push({ op: "WRITE_JSON", path: jPath, nodeId: nextNodeId() });
         }
         break;
       case "nonce_ref":
@@ -172,7 +183,14 @@ export class Emitter {
     this.instructions.push({ op: "WRITE_LITERAL", value, nodeId: nextNodeId() });
   }
 
-  private emitInterp(node: { expr: ExprNode; escapeContext?: string; trimStart: boolean; trimEnd: boolean; raw?: boolean; span: Span }): void {
+  private emitInterp(node: {
+    expr: ExprNode;
+    escapeContext?: string;
+    trimStart: boolean;
+    trimEnd: boolean;
+    raw?: boolean;
+    span: Span;
+  }): void {
     if (this.inScriptBlock) return;
     if (node.expr.kind === "filter_chain" && node.expr.expr.kind === "path" && !node.raw) {
       this.emitFilterChain(node.expr);
@@ -180,8 +198,12 @@ export class Emitter {
     }
     const path = this.exprToPath(node.expr);
     if (!path) {
-      this.instructions.push({ op: "WRITE_EXPRESSION", expr: this.exprToIrExpr(node.expr),
-        escape: node.raw ? "raw" : "html", nodeId: nextNodeId() });
+      this.instructions.push({
+        op: "WRITE_EXPRESSION",
+        expr: this.exprToIrExpr(node.expr),
+        escape: node.raw ? "raw" : "html",
+        nodeId: nextNodeId(),
+      });
       return;
     }
     if (node.raw) {
@@ -200,7 +222,13 @@ export class Emitter {
     }
   }
 
-  private emitIf(node: { condition: ExprNode; consequent: AstNode[]; elseIfs: { condition: ExprNode; body: AstNode[] }[]; alternate: AstNode[] | null; span: Span }): void {
+  private emitIf(node: {
+    condition: ExprNode;
+    consequent: AstNode[];
+    elseIfs: { condition: ExprNode; body: AstNode[] }[];
+    alternate: AstNode[] | null;
+    span: Span;
+  }): void {
     const saved = this.instructions;
     this.instructions = [];
     this.emitNodes(node.consequent);
@@ -230,7 +258,14 @@ export class Emitter {
     });
   }
 
-  private emitEach(node: { itemName: string; indexName: string | null; source: ExprNode; body: AstNode[]; empty: AstNode[]; span: Span }): void {
+  private emitEach(node: {
+    itemName: string;
+    indexName: string | null;
+    source: ExprNode;
+    body: AstNode[];
+    empty: AstNode[];
+    span: Span;
+  }): void {
     const saved = this.instructions;
     this.instructions = [];
     this.emitNodes(node.body);
@@ -252,7 +287,16 @@ export class Emitter {
     });
   }
 
-  private emitAsyncBlock(node: { binding: string; fetcher: string; args: ExprNode[]; body: AstNode[]; loading: AstNode[]; error: AstNode[]; errorBinding: string | null; span: Span }): void {
+  private emitAsyncBlock(node: {
+    binding: string;
+    fetcher: string;
+    args: ExprNode[];
+    body: AstNode[];
+    loading: AstNode[];
+    error: AstNode[];
+    errorBinding: string | null;
+    span: Span;
+  }): void {
     this.fetchers.add(node.fetcher);
     const saved = this.instructions;
 
@@ -292,7 +336,12 @@ export class Emitter {
     });
   }
 
-  private emitCacheBlock(node: { keyParts: CacheKeyPart[]; ttl: number; body: AstNode[]; span: Span }): void {
+  private emitCacheBlock(node: {
+    keyParts: CacheKeyPart[];
+    ttl: number;
+    body: AstNode[];
+    span: Span;
+  }): void {
     const saved = this.instructions;
     this.instructions = [];
     this.emitNodes(node.body);
@@ -301,10 +350,11 @@ export class Emitter {
     this.instructions = saved;
     this.instructions.push({
       op: "CACHE_BLOCK",
-      keyParts: node.keyParts.map((kp): IrCacheKeyPart =>
-        kp.kind === "literal"
-          ? { kind: "literal", value: kp.value }
-          : { kind: "expr", expr: this.exprToIrExpr(kp.expr) }
+      keyParts: node.keyParts.map(
+        (kp): IrCacheKeyPart =>
+          kp.kind === "literal"
+            ? { kind: "literal", value: kp.value }
+            : { kind: "expr", expr: this.exprToIrExpr(kp.expr) },
       ),
       ttl: node.ttl,
       body,
@@ -312,7 +362,12 @@ export class Emitter {
     });
   }
 
-  private emitBoundary(node: { body: AstNode[]; errorBinding: string | null; fallback: AstNode[]; span: Span }): void {
+  private emitBoundary(node: {
+    body: AstNode[];
+    errorBinding: string | null;
+    fallback: AstNode[];
+    span: Span;
+  }): void {
     const saved = this.instructions;
     this.instructions = [];
     this.emitNodes(node.body);
@@ -332,7 +387,11 @@ export class Emitter {
     });
   }
 
-  private emitLayout(node: { path: string; slots: { name: string; body: AstNode[] }[]; span: Span }): void {
+  private emitLayout(node: {
+    path: string;
+    slots: { name: string; body: AstNode[] }[];
+    span: Span;
+  }): void {
     for (const slot of node.slots) {
       this.emitSlotContent(slot);
     }
@@ -365,7 +424,10 @@ export class Emitter {
     });
   }
 
-  private emitRender(node: { name: string; props: { kind: string; name: string; value?: ExprNode; span?: Span }[] }): void {
+  private emitRender(node: {
+    name: string;
+    props: { kind: string; name: string; value?: ExprNode; span?: Span }[];
+  }): void {
     const props: Record<string, IrExpr> = {};
     for (const prop of node.props) {
       if (prop.kind === "named" && prop.value) {
@@ -380,7 +442,12 @@ export class Emitter {
     });
   }
 
-  private emitRecursiveDef(node: { name: string; param: string; body: AstNode[]; span: Span }): void {
+  private emitRecursiveDef(node: {
+    name: string;
+    param: string;
+    body: AstNode[];
+    span: Span;
+  }): void {
     const saved = this.instructions;
     this.instructions = [];
     this.emitNodes(node.body);
@@ -409,7 +476,10 @@ export class Emitter {
     const contributions: HeadContribution[] = [];
     for (const c of node.contributions) {
       if (c.kind === "head_title") {
-        contributions.push({ kind: "title", instructions: this.emitInstructionsForNodes(c.content) });
+        contributions.push({
+          kind: "title",
+          instructions: this.emitInstructionsForNodes(c.content),
+        });
       } else if (c.kind === "head_meta") {
         const attrs: Record<string, IrExpr> = {};
         for (const [k, v] of Object.entries(c.attributes)) {
@@ -419,7 +489,10 @@ export class Emitter {
       } else if (c.kind === "head_canonical") {
         contributions.push({ kind: "canonical", url: this.exprToIrExpr(c.url) });
       } else if (c.kind === "head_jsonld") {
-        contributions.push({ kind: "jsonld", instructions: this.emitInstructionsForNodes(c.content) });
+        contributions.push({
+          kind: "jsonld",
+          instructions: this.emitInstructionsForNodes(c.content),
+        });
       }
     }
     this.instructions.push({
@@ -439,7 +512,12 @@ export class Emitter {
     });
   }
 
-  private emitScriptBlock(node: { scriptType: string; content: AstNode[]; attrType: string | null; span: Span }): void {
+  private emitScriptBlock(node: {
+    scriptType: string;
+    content: AstNode[];
+    attrType: string | null;
+    span: Span;
+  }): void {
     this.inScriptBlock = true;
     const saved = this.instructions;
     this.instructions = [];
@@ -543,14 +621,27 @@ export class Emitter {
         return {
           kind: "filter_chain",
           expr: this.exprToIrExpr(expr.expr),
-          filters: expr.filters.map(f => ({ name: f.name, args: f.args.map(a => this.exprToIrExpr(a)) })),
+          filters: expr.filters.map((f) => ({
+            name: f.name,
+            args: f.args.map((a) => this.exprToIrExpr(a)),
+          })),
         };
       case "array":
-        return { kind: "array", items: expr.items.map(item => this.exprToIrExpr(item)) };
+        return { kind: "array", items: expr.items.map((item) => this.exprToIrExpr(item)) };
       case "object":
-        return { kind: "object", fields: expr.fields.map(field => ({ name: field.name, value: this.exprToIrExpr(field.value) })) };
+        return {
+          kind: "object",
+          fields: expr.fields.map((field) => ({
+            name: field.name,
+            value: this.exprToIrExpr(field.value),
+          })),
+        };
       case "index":
-        return { kind: "index", object: this.exprToIrExpr(expr.object), key: this.exprToIrExpr(expr.key) };
+        return {
+          kind: "index",
+          object: this.exprToIrExpr(expr.object),
+          key: this.exprToIrExpr(expr.key),
+        };
     }
   }
 
@@ -560,7 +651,10 @@ export class Emitter {
       const last = merged[merged.length - 1];
       if (inst.op === "WRITE_LITERAL" && last && last.op === "WRITE_LITERAL") {
         const lastLit = last as WriteLiteralInstruction;
-        merged[merged.length - 1] = { ...lastLit, value: lastLit.value + (inst as WriteLiteralInstruction).value };
+        merged[merged.length - 1] = {
+          ...lastLit,
+          value: lastLit.value + (inst as WriteLiteralInstruction).value,
+        };
       } else {
         merged.push(inst);
       }
@@ -576,7 +670,7 @@ export class Emitter {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return Math.abs(hash).toString(16).substring(0, 8);

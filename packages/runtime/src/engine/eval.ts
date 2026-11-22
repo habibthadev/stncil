@@ -21,7 +21,9 @@ export function evalExpr(expr: IrExpr, ctx: RenderContext): unknown {
       return evalBinary(expr.op, left, evalExpr(expr.right, ctx));
     }
     case "unary":
-      return expr.op === "-" ? -arithmeticNumber(evalExpr(expr.operand, ctx)) : !evalExpr(expr.operand, ctx);
+      return expr.op === "-"
+        ? -arithmeticNumber(evalExpr(expr.operand, ctx))
+        : !evalExpr(expr.operand, ctx);
     case "ternary":
       return evalExpr(expr.condition, ctx)
         ? evalExpr(expr.consequent, ctx)
@@ -38,9 +40,11 @@ export function evalExpr(expr: IrExpr, ctx: RenderContext): unknown {
       return value;
     }
     case "array":
-      return expr.items.map(item => evalExpr(item, ctx));
+      return expr.items.map((item) => evalExpr(item, ctx));
     case "object":
-      return Object.fromEntries(expr.fields.map(field => [field.name, evalExpr(field.value, ctx)]));
+      return Object.fromEntries(
+        expr.fields.map((field) => [field.name, evalExpr(field.value, ctx)]),
+      );
     case "index":
       return resolveMember(evalExpr(expr.object, ctx), evalExpr(expr.key, ctx));
   }
@@ -48,22 +52,35 @@ export function evalExpr(expr: IrExpr, ctx: RenderContext): unknown {
 
 function evalBinary(op: string, left: unknown, right: unknown): unknown {
   switch (op) {
-    case "==": return left === right;
-    case "!=": return left !== right;
-    case "<": return (left as number) < (right as number);
-    case ">": return (left as number) > (right as number);
-    case "<=": return (left as number) <= (right as number);
-    case ">=": return (left as number) >= (right as number);
-    case "~": return String(left ?? "") + String(right ?? "");
-    case "+": case "-": case "*": case "/": case "%": {
+    case "==":
+      return left === right;
+    case "!=":
+      return left !== right;
+    case "<":
+      return (left as number) < (right as number);
+    case ">":
+      return (left as number) > (right as number);
+    case "<=":
+      return (left as number) <= (right as number);
+    case ">=":
+      return (left as number) >= (right as number);
+    case "~":
+      return String(left ?? "") + String(right ?? "");
+    case "+":
+    case "-":
+    case "*":
+    case "/":
+    case "%": {
       const a = arithmeticNumber(left);
       const b = arithmeticNumber(right);
       if ((op === "/" || op === "%") && b === 0) throw new RangeError("Division by zero");
-      const result = op === "+" ? a + b : op === "-" ? a - b : op === "*" ? a * b : op === "/" ? a / b : a % b;
+      const result =
+        op === "+" ? a + b : op === "-" ? a - b : op === "*" ? a * b : op === "/" ? a / b : a % b;
       if (!Number.isFinite(result)) throw new RangeError("Arithmetic result must be finite");
       return result;
     }
-    default: return undefined;
+    default:
+      return undefined;
   }
 }
 

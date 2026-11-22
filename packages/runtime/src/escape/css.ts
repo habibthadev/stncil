@@ -6,14 +6,11 @@ export function escapeCss(value: unknown): string {
     const ch = str.charCodeAt(i);
     if (ch === 0) {
       result += "\ufffd";
-    } else if (
-      (ch >= 0x0001 && ch <= 0x001f) ||
-      ch === 0x007f ||
-      (ch >= 0x0080 && ch <= 0x009f)
-    ) {
+    } else if ((ch >= 0x0001 && ch <= 0x001f) || ch === 0x007f || (ch >= 0x0080 && ch <= 0x009f)) {
       result += `\\${ch.toString(16)} `;
     } else if (
-      (ch >= 0x0020 && ch <= 0x007e) &&
+      ch >= 0x0020 &&
+      ch <= 0x007e &&
       ch !== 0x0022 &&
       ch !== 0x0027 &&
       ch !== 0x005c &&

@@ -97,6 +97,11 @@ export interface Token {
   readonly trimEnd?: boolean;
 }
 
-export function token(type: TokenType, value: string, span: Span, opts?: { trimStart?: boolean; trimEnd?: boolean }): Token {
+export function token(
+  type: TokenType,
+  value: string,
+  span: Span,
+  opts?: { trimStart?: boolean; trimEnd?: boolean },
+): Token {
   return { type, value, span, ...opts };
 }

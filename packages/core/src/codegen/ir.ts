@@ -289,10 +289,28 @@ export type IrExpr =
   | { kind: "binary"; op: IrBinaryOp; left: IrExpr; right: IrExpr }
   | { kind: "unary"; op: IrUnaryOp; operand: IrExpr }
   | { kind: "ternary"; condition: IrExpr; consequent: IrExpr; alternate: IrExpr }
-  | { kind: "filter_chain"; expr: IrExpr; filters: readonly { readonly name: string; readonly args: readonly IrExpr[] }[] }
+  | {
+      kind: "filter_chain";
+      expr: IrExpr;
+      filters: readonly { readonly name: string; readonly args: readonly IrExpr[] }[];
+    }
   | { kind: "array"; items: readonly IrExpr[] }
   | { kind: "object"; fields: readonly { name: string; value: IrExpr }[] }
   | { kind: "index"; object: IrExpr; key: IrExpr };
 
-export type IrBinaryOp = "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||" | "+" | "-" | "*" | "/" | "%" | "~";
+export type IrBinaryOp =
+  | "=="
+  | "!="
+  | "<"
+  | ">"
+  | "<="
+  | ">="
+  | "&&"
+  | "||"
+  | "+"
+  | "-"
+  | "*"
+  | "/"
+  | "%"
+  | "~";
 export type IrUnaryOp = "!" | "-";

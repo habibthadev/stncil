@@ -9,14 +9,26 @@ export interface RenderResult {
 }
 
 function requiresAsync(instructions: readonly IrInstruction[]): boolean {
-  return instructions.some(instruction => {
+  return instructions.some((instruction) => {
     switch (instruction.op) {
-      case "ASYNC_BLOCK": case "PARALLEL_GROUP": return true;
-      case "IF": return requiresAsync(instruction.consequent) || requiresAsync(instruction.alternate ?? []) || instruction.elseIfs.some(branch => requiresAsync(branch.body));
-      case "EACH": return requiresAsync(instruction.body) || requiresAsync(instruction.empty);
-      case "BOUNDARY": return requiresAsync(instruction.body) || requiresAsync(instruction.fallback);
-      case "CACHE_BLOCK": case "RECURSIVE_DEF": return requiresAsync(instruction.body);
-      default: return false;
+      case "ASYNC_BLOCK":
+      case "PARALLEL_GROUP":
+        return true;
+      case "IF":
+        return (
+          requiresAsync(instruction.consequent) ||
+          requiresAsync(instruction.alternate ?? []) ||
+          instruction.elseIfs.some((branch) => requiresAsync(branch.body))
+        );
+      case "EACH":
+        return requiresAsync(instruction.body) || requiresAsync(instruction.empty);
+      case "BOUNDARY":
+        return requiresAsync(instruction.body) || requiresAsync(instruction.fallback);
+      case "CACHE_BLOCK":
+      case "RECURSIVE_DEF":
+        return requiresAsync(instruction.body);
+      default:
+        return false;
     }
   });
 }
@@ -25,7 +37,10 @@ export class RuntimeEngine {
   private doc: IrDocument;
   private readonly needsAsync: boolean;
 
-  constructor(doc: IrDocument, private readonly options: RuntimeOptions = {}) {
+  constructor(
+    doc: IrDocument,
+    private readonly options: RuntimeOptions = {},
+  ) {
     this.doc = doc;
     this.needsAsync = requiresAsync(doc.instructions);
   }
@@ -37,8 +52,10 @@ export class RuntimeEngine {
     this.options.signal?.addEventListener("abort", abort, { once: true });
     if (this.options.signal?.aborted) abort();
     try {
-      const chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(),
-        { ...this.options, signal: controller.signal });
+      const chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(), {
+        ...this.options,
+        signal: controller.signal,
+      });
       return { html: await joinChunks(chunks), errors: [] };
     } catch (error) {
       controller.abort(error);
@@ -72,10 +89,12 @@ export class RuntimeEngine {
     let finished = false;
     const dispose = () => parentSignal?.removeEventListener("abort", abort);
     return new ReadableStream({
-      start: stream => {
+      start: (stream) => {
         try {
-          chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(),
-            { ...this.options, signal: controller.signal })[Symbol.iterator]();
+          chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(), {
+            ...this.options,
+            signal: controller.signal,
+          })[Symbol.iterator]();
         } catch (error) {
           finished = true;
           controller.abort(error);
@@ -87,16 +106,28 @@ export class RuntimeEngine {
         try {
           controller.signal.throwIfAborted();
           const chunk = chunks.next();
-          if (chunk.done) { finished = true; stream.close(); dispose(); return; }
+          if (chunk.done) {
+            finished = true;
+            stream.close();
+            dispose();
+            return;
+          }
           const value = await chunk.value;
           if (!finished) stream.enqueue(value);
         } catch (error) {
           controller.abort(error);
-          if (!finished) { finished = true; stream.error(error); }
+          if (!finished) {
+            finished = true;
+            stream.error(error);
+          }
           dispose();
         }
       },
-      cancel(reason) { finished = true; controller.abort(reason); dispose(); },
+      cancel(reason) {
+        finished = true;
+        controller.abort(reason);
+        dispose();
+      },
     });
   }
 

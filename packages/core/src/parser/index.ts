@@ -2,16 +2,50 @@ import { Token, TokenType } from "../lexer/token";
 import { Span } from "../error";
 import { ParseError } from "./error";
 import {
-  AstNode, ExprNode, OutputMode, ContextFieldNode, TypeExprNode,
-  BinaryOp, RenderProp, CacheKeyPart,
-  TemplateNode, OutputModeNode, ContextDeclNode, LiteralNode, InterpNode,
-  IfNode, EachNode, AsyncBlockNode, LetNode, CacheBlockNode, BoundaryNode,
-  LayoutNode, SlotContentNode, SlotDefNode, ImportNode, RenderNode,
-  RecursiveDefNode, RecursiveCallNode, HeadPushNode,
-  HeadTitleNode, HeadMetaNode, HeadCanonicalNode, HeadJsonLdNode,
-  StyleBlockNode, StylesTargetNode, ScriptBlockNode, ScriptsTargetNode,
-  HeadTargetNode, CsrfNode, AssetNode, JsonNode, NonceRefNode,
-  DebugNode, TranslateNode, FilterChainNode, FilterNode,
+  AstNode,
+  ExprNode,
+  OutputMode,
+  ContextFieldNode,
+  TypeExprNode,
+  BinaryOp,
+  RenderProp,
+  CacheKeyPart,
+  TemplateNode,
+  OutputModeNode,
+  ContextDeclNode,
+  LiteralNode,
+  InterpNode,
+  IfNode,
+  EachNode,
+  AsyncBlockNode,
+  LetNode,
+  CacheBlockNode,
+  BoundaryNode,
+  LayoutNode,
+  SlotContentNode,
+  SlotDefNode,
+  ImportNode,
+  RenderNode,
+  RecursiveDefNode,
+  RecursiveCallNode,
+  HeadPushNode,
+  HeadTitleNode,
+  HeadMetaNode,
+  HeadCanonicalNode,
+  HeadJsonLdNode,
+  StyleBlockNode,
+  StylesTargetNode,
+  ScriptBlockNode,
+  ScriptsTargetNode,
+  HeadTargetNode,
+  CsrfNode,
+  AssetNode,
+  JsonNode,
+  NonceRefNode,
+  DebugNode,
+  TranslateNode,
+  FilterChainNode,
+  FilterNode,
 } from "./ast";
 
 const BINARY_OPS: Record<string, { prec: number; op: BinaryOp }> = {
@@ -19,8 +53,8 @@ const BINARY_OPS: Record<string, { prec: number; op: BinaryOp }> = {
   "&&": { prec: 2, op: "&&" },
   "==": { prec: 3, op: "==" },
   "!=": { prec: 3, op: "!=" },
-  "<":  { prec: 4, op: "<" },
-  ">":  { prec: 4, op: ">" },
+  "<": { prec: 4, op: "<" },
+  ">": { prec: 4, op: ">" },
   "<=": { prec: 4, op: "<=" },
   ">=": { prec: 4, op: ">=" },
   "~": { prec: 5, op: "~" },
@@ -47,14 +81,25 @@ export class Parser {
     return {
       kind: "template",
       nodes,
-      span: nodes.length > 0
-        ? { start: nodes[0]!.span.start, end: nodes[nodes.length - 1]!.span.end, line: nodes[0]!.span.line, col: nodes[0]!.span.col }
-        : { start: 0, end: 0, line: 1, col: 1 },
+      span:
+        nodes.length > 0
+          ? {
+              start: nodes[0]!.span.start,
+              end: nodes[nodes.length - 1]!.span.end,
+              line: nodes[0]!.span.line,
+              col: nodes[0]!.span.col,
+            }
+          : { start: 0, end: 0, line: 1, col: 1 },
     };
   }
 
   private parseNode(): AstNode {
-    if (["PLUS", "STAR", "SLASH", "PERCENT", "CONCAT", "LBRACKET", "RBRACKET"].includes(this.peek().type)) return this.parseContentBlock();
+    if (
+      ["PLUS", "STAR", "SLASH", "PERCENT", "CONCAT", "LBRACKET", "RBRACKET"].includes(
+        this.peek().type,
+      )
+    )
+      return this.parseContentBlock();
     if (this.check("OUTPUT")) return this.parseOutputMode();
     if (this.check("CONTEXT")) return this.parseContextDecl();
     if (this.check("IF") || this.check("TRIM_IF")) return this.parseIf();
@@ -80,11 +125,45 @@ export class Parser {
     if (this.check("NONCE")) return this.parseNonceRef();
     if (this.check("DEBUG")) return this.parseDebug();
     if (this.check("T")) return this.parseTranslate();
-    if (this.check("LITERAL") || this.check("IDENTIFIER") || this.check("NUMBER") || this.check("STRING") || this.check("BOOLEAN") || this.check("NULL") || this.check("DOT") || this.check("LPAREN") || this.check("RPAREN") || this.check("COMMA") || this.check("COLON") || this.check("LBRACE") || this.check("GT") || this.check("LT") || this.check("MINUS") || this.check("EQUALS") || this.check("NOT") || this.check("AND") || this.check("OR") || this.check("PIPE") || this.check("QUESTION") || this.check("SPREAD") || this.check("EQ") || this.check("NEQ") || this.check("GTE") || this.check("LTE")) return this.parseContentBlock();
-    if (this.check("INTERP_OPEN") || this.check("INTERP_OPEN_TRIM") || this.check("INTERP_OPEN_RAW")) return this.parseInterp();
+    if (
+      this.check("LITERAL") ||
+      this.check("IDENTIFIER") ||
+      this.check("NUMBER") ||
+      this.check("STRING") ||
+      this.check("BOOLEAN") ||
+      this.check("NULL") ||
+      this.check("DOT") ||
+      this.check("LPAREN") ||
+      this.check("RPAREN") ||
+      this.check("COMMA") ||
+      this.check("COLON") ||
+      this.check("LBRACE") ||
+      this.check("GT") ||
+      this.check("LT") ||
+      this.check("MINUS") ||
+      this.check("EQUALS") ||
+      this.check("NOT") ||
+      this.check("AND") ||
+      this.check("OR") ||
+      this.check("PIPE") ||
+      this.check("QUESTION") ||
+      this.check("SPREAD") ||
+      this.check("EQ") ||
+      this.check("NEQ") ||
+      this.check("GTE") ||
+      this.check("LTE")
+    )
+      return this.parseContentBlock();
+    if (
+      this.check("INTERP_OPEN") ||
+      this.check("INTERP_OPEN_TRIM") ||
+      this.check("INTERP_OPEN_RAW")
+    )
+      return this.parseInterp();
     if (this.check("TRIM_CLOSE_IF") || this.check("CLOSE_IF") || this.check("CLOSE_IF_TRIM")) {
       this.advance();
-      if (this.isAtEnd()) return { kind: "literal", value: "", span: { start: -1, end: -1, line: -1, col: -1 } };
+      if (this.isAtEnd())
+        return { kind: "literal", value: "", span: { start: -1, end: -1, line: -1, col: -1 } };
       return this.parseNode();
     }
     if (this.check("ELSE") || this.check("ELSE_IF")) {
@@ -157,11 +236,11 @@ export class Parser {
     }
     if (this.check("IDENTIFIER")) {
       const name = this.advance().value;
-      if (name === "string")  return { kind: "string" };
-      if (name === "number")  return { kind: "number" };
+      if (name === "string") return { kind: "string" };
+      if (name === "number") return { kind: "number" };
       if (name === "boolean") return { kind: "boolean" };
-      if (name === "Date")    return { kind: "date" };
-      if (name === "null")    return { kind: "null" };
+      if (name === "Date") return { kind: "date" };
+      if (name === "null") return { kind: "null" };
       return { kind: "named", name };
     }
     if (this.check("STRING")) {
@@ -215,11 +294,39 @@ export class Parser {
   }
 
   private readonly contentTokens = new Set<TokenType>([
-    "LITERAL", "IDENTIFIER", "NUMBER", "STRING", "BOOLEAN", "NULL",
-    "DOT", "LPAREN", "RPAREN", "COMMA", "COLON", "LBRACE",
-    "GT", "LT", "MINUS", "EQUALS", "NOT", "AND", "OR", "PIPE", "QUESTION", "SPREAD",
-    "EQ", "NEQ", "GTE", "LTE"
-    , "PLUS", "STAR", "SLASH", "PERCENT", "CONCAT", "LBRACKET", "RBRACKET"
+    "LITERAL",
+    "IDENTIFIER",
+    "NUMBER",
+    "STRING",
+    "BOOLEAN",
+    "NULL",
+    "DOT",
+    "LPAREN",
+    "RPAREN",
+    "COMMA",
+    "COLON",
+    "LBRACE",
+    "GT",
+    "LT",
+    "MINUS",
+    "EQUALS",
+    "NOT",
+    "AND",
+    "OR",
+    "PIPE",
+    "QUESTION",
+    "SPREAD",
+    "EQ",
+    "NEQ",
+    "GTE",
+    "LTE",
+    "PLUS",
+    "STAR",
+    "SLASH",
+    "PERCENT",
+    "CONCAT",
+    "LBRACKET",
+    "RBRACKET",
   ]);
 
   private parseContentBlock(): LiteralNode {
@@ -231,7 +338,11 @@ export class Parser {
       value += tok.raw ?? tok.value;
       lastSpan = tok.span;
     }
-    return { kind: "literal", value, span: { start: firstSpan.start, end: lastSpan.end, line: firstSpan.line, col: firstSpan.col } };
+    return {
+      kind: "literal",
+      value,
+      span: { start: firstSpan.start, end: lastSpan.end, line: firstSpan.line, col: firstSpan.col },
+    };
   }
 
   private parseLiteral(): LiteralNode {
@@ -264,13 +375,31 @@ export class Parser {
         filters.push({ name: nameTok.value, args, span: nameTok.span });
       }
       const lastSpan = filters[filters.length - 1]!.span;
-      expr = { kind: "filter_chain", expr, filters, span: { start: expr.span.start, end: lastSpan.end, line: expr.span.line, col: expr.span.col } };
+      expr = {
+        kind: "filter_chain",
+        expr,
+        filters,
+        span: {
+          start: expr.span.start,
+          end: lastSpan.end,
+          line: expr.span.line,
+          col: expr.span.col,
+        },
+      };
     }
-    const closeTok = this.check("INTERP_CLOSE") || this.check("INTERP_CLOSE_TRIM") || this.check("INTERP_CLOSE_RAW")
-      ? this.advance()
-      : this.consume("INTERP_CLOSE", "Expected }} after expression");
+    const closeTok =
+      this.check("INTERP_CLOSE") ||
+      this.check("INTERP_CLOSE_TRIM") ||
+      this.check("INTERP_CLOSE_RAW")
+        ? this.advance()
+        : this.consume("INTERP_CLOSE", "Expected }} after expression");
     const trimEnd = closeTok.type === "INTERP_CLOSE_TRIM";
-    const span = { start: openTok.span.start, end: closeTok.span.end, line: openTok.span.line, col: openTok.span.col };
+    const span = {
+      start: openTok.span.start,
+      end: closeTok.span.end,
+      line: openTok.span.line,
+      col: openTok.span.col,
+    };
     return { kind: "interp", expr, trimStart, trimEnd, raw, span };
   }
 
@@ -317,7 +446,13 @@ export class Parser {
     }
 
     return {
-      kind: "if", condition, consequent, elseIfs, alternate, trimStart, trimEnd,
+      kind: "if",
+      condition,
+      consequent,
+      elseIfs,
+      alternate,
+      trimStart,
+      trimEnd,
       span: tok.span,
     };
   }
@@ -346,7 +481,15 @@ export class Parser {
         empty = this.parseBlockBody("RBRACE");
         this.consume("RBRACE", "Expected } after @empty body");
       }
-      return { kind: "each", itemName: itemTok.value, indexName, source, body, empty, span: tok.span };
+      return {
+        kind: "each",
+        itemName: itemTok.value,
+        indexName,
+        source,
+        body,
+        empty,
+        span: tok.span,
+      };
     }
     const inTok = this.consume("IDENTIFIER", "Expected 'in' in @each");
     if (inTok.value !== "in") throw this.error("Expected 'in' in @each", inTok.span);
@@ -363,7 +506,15 @@ export class Parser {
       empty = this.parseBlockBody("RBRACE");
       this.consume("RBRACE", "Expected } after @empty body");
     }
-    return { kind: "each", itemName: itemTok.value, indexName, source, body, empty, span: tok.span };
+    return {
+      kind: "each",
+      itemName: itemTok.value,
+      indexName,
+      source,
+      body,
+      empty,
+      span: tok.span,
+    };
   }
 
   private parseAsyncBlock(): AsyncBlockNode {
@@ -373,7 +524,8 @@ export class Parser {
     this.skipSpace();
     if (!this.match("EQUALS")) {
       const fromTok = this.consume("IDENTIFIER", "Expected 'from' or = in @async");
-      if (fromTok.value !== "from") throw this.error("Expected 'from' or = in @async", fromTok.span);
+      if (fromTok.value !== "from")
+        throw this.error("Expected 'from' or = in @async", fromTok.span);
     }
     const fetcherTok = this.consume("IDENTIFIER", "Expected fetcher name in @async");
     const args: ExprNode[] = [];
@@ -417,7 +569,17 @@ export class Parser {
       this.consume("RBRACE", "Expected } after @error body");
     }
 
-    return { kind: "async_block", binding: bindingTok.value, fetcher: fetcherTok.value, args, body, loading, errorBinding, error, span: tok.span };
+    return {
+      kind: "async_block",
+      binding: bindingTok.value,
+      fetcher: fetcherTok.value,
+      args,
+      body,
+      loading,
+      errorBinding,
+      error,
+      span: tok.span,
+    };
   }
 
   private parseLet(): LetNode {
@@ -465,7 +627,10 @@ export class Parser {
           i++;
         }
         i += 2; // skip }}
-        parts.push({ kind: "expr", expr: { kind: "path", segments: exprStr.trim().split("."), span: tokSpan() } });
+        parts.push({
+          kind: "expr",
+          expr: { kind: "path", segments: exprStr.trim().split("."), span: tokSpan() },
+        });
       } else {
         let lit = "";
         while (i < keyStr.length && !(keyStr[i] === "{" && keyStr[i + 1] === "{")) {
@@ -600,7 +765,13 @@ export class Parser {
     this.consume("LBRACE", "Expected { for recursive body");
     const body = this.parseBlockBody("RBRACE");
     this.consume("RBRACE", "Expected } after recursive body");
-    return { kind: "recursive_def", name: nameTok.value, param: paramTok.value, body, span: tok.span };
+    return {
+      kind: "recursive_def",
+      name: nameTok.value,
+      param: paramTok.value,
+      body,
+      span: tok.span,
+    };
   }
 
   private parseRecursiveCall(): RecursiveCallNode {
@@ -685,13 +856,18 @@ export class Parser {
     let css = "";
     let depth = 1;
     while (!this.isAtEnd() && depth > 0) {
-      if (this.check("LBRACE")) { css += "{"; this.advance(); depth++; }
-      else if (this.check("RBRACE")) {
+      if (this.check("LBRACE")) {
+        css += "{";
+        this.advance();
+        depth++;
+      } else if (this.check("RBRACE")) {
         this.advance();
         depth--;
         if (depth > 0) css += "}";
+      } else {
+        const token = this.advance();
+        css += token.raw ?? token.value;
       }
-      else { const token = this.advance(); css += token.raw ?? token.value; }
     }
     if (depth !== 0) throw this.error("Expected } after @style body");
     return { kind: "style_block", css, critical, span: tok.span };
@@ -706,7 +882,10 @@ export class Parser {
     const tok = this.advance();
     let attrType: string | null = null;
     if (this.match("LPAREN")) {
-      const attrTok = this.consume("IDENTIFIER", "Expected script attribute (defer, async, module)");
+      const attrTok = this.consume(
+        "IDENTIFIER",
+        "Expected script attribute (defer, async, module)",
+      );
       if (attrTok.value === "type") {
         this.consume("COLON", "Expected : after type");
         const typeTok = this.consume("STRING", "Expected type value");
@@ -718,9 +897,15 @@ export class Parser {
     let content: AstNode[] = [];
     let depth = 1;
     while (!this.isAtEnd() && depth > 0) {
-      if (this.check("LBRACE")) { this.advance(); depth++; }
-      else if (this.check("RBRACE")) { this.advance(); depth--; }
-      else { content.push(this.parseNode()); }
+      if (this.check("LBRACE")) {
+        this.advance();
+        depth++;
+      } else if (this.check("RBRACE")) {
+        this.advance();
+        depth--;
+      } else {
+        content.push(this.parseNode());
+      }
     }
     return { kind: "script_block", scriptType: "inline", attrType, content, span: tok.span };
   }
@@ -802,7 +987,9 @@ export class Parser {
         if (this.match("LPAREN")) {
           this.skipSpace();
           if (!this.check("RPAREN")) {
-            do { args.push(this.parseExpr()); } while (this.match("COMMA"));
+            do {
+              args.push(this.parseExpr());
+            } while (this.match("COMMA"));
           }
           this.consume("RPAREN", "Expected ) after filter arguments");
         }
@@ -832,7 +1019,9 @@ export class Parser {
         if (this.lineBoundExpression && this.peek().value.includes("\n")) break;
         this.advance();
       }
-      const opInfo = Object.hasOwn(BINARY_OPS, this.peek().value) ? BINARY_OPS[this.peek().value] : undefined;
+      const opInfo = Object.hasOwn(BINARY_OPS, this.peek().value)
+        ? BINARY_OPS[this.peek().value]
+        : undefined;
       if (!opInfo || opInfo.prec < minPrec) break;
       this.advance();
       const right = this.parseBinary(opInfo.prec + 1);
@@ -841,7 +1030,12 @@ export class Parser {
         op: opInfo.op,
         left,
         right,
-        span: { start: left.span.start, end: right.span.end, line: left.span.line, col: left.span.col },
+        span: {
+          start: left.span.start,
+          end: right.span.end,
+          line: left.span.line,
+          col: left.span.col,
+        },
       };
     }
     return left;
@@ -861,7 +1055,12 @@ export class Parser {
         if (expr.kind === "path") {
           expr = { ...expr, segments: [...expr.segments, field.value] };
         } else {
-          expr = { kind: "index", object: expr, key: { kind: "string", value: field.value, span: field.span }, span: expr.span };
+          expr = {
+            kind: "index",
+            object: expr,
+            key: { kind: "string", value: field.value, span: field.span },
+            span: expr.span,
+          };
         }
       } else {
         this.advance();
@@ -875,7 +1074,7 @@ export class Parser {
 
   private parsePrimary(): ExprNode {
     while (this.check("LITERAL") && this.peek().value.trim() === "") {
-        if (this.lineBoundExpression && this.peek().value.includes("\n")) break;
+      if (this.lineBoundExpression && this.peek().value.includes("\n")) break;
       this.advance();
     }
     if (this.check("STRING")) {
@@ -899,7 +1098,11 @@ export class Parser {
       const segments: string[] = [tok.value];
       return { kind: "path", segments, span: tok.span };
     }
-    if (this.check("INTERP_OPEN") || this.check("INTERP_OPEN_TRIM") || this.check("INTERP_OPEN_RAW")) {
+    if (
+      this.check("INTERP_OPEN") ||
+      this.check("INTERP_OPEN_TRIM") ||
+      this.check("INTERP_OPEN_RAW")
+    ) {
       return this.parseInterp().expr;
     }
     if (this.check("LPAREN")) {
@@ -913,7 +1116,10 @@ export class Parser {
       const items: ExprNode[] = [];
       this.skipSpace();
       if (!this.check("RBRACKET")) {
-        do { items.push(this.parseExpr()); this.skipSpace(); } while (this.match("COMMA"));
+        do {
+          items.push(this.parseExpr());
+          this.skipSpace();
+        } while (this.match("COMMA"));
       }
       this.consume("RBRACKET", "Expected ] after array literal");
       return { kind: "array", items, span };
@@ -924,7 +1130,8 @@ export class Parser {
       this.skipSpace();
       while (!this.check("RBRACE") && !(this.check("LITERAL") && this.peek().value === "}")) {
         const name = this.advance();
-        if (name.type !== "IDENTIFIER" && name.type !== "STRING") throw this.error("Expected object field name", name.span);
+        if (name.type !== "IDENTIFIER" && name.type !== "STRING")
+          throw this.error("Expected object field name", name.span);
         this.consume("COLON", "Expected : after object field name");
         fields.push({ name: name.value, value: this.parseExpr() });
         this.skipSpace();
@@ -980,7 +1187,7 @@ export class Parser {
   private skipSpaceBefore(...types: TokenType[]): void {
     const position = this.pos;
     this.skipSpace();
-    if (!types.some(type => this.check(type))) this.pos = position;
+    if (!types.some((type) => this.check(type))) this.pos = position;
   }
 
   private consume(type: TokenType, message: string): Token {

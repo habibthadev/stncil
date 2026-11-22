@@ -1,5 +1,10 @@
 import { compile, type CompileOptions, type CompileResult } from "@stncil/core";
-import { RuntimeEngine, type RenderContext, type RenderResult, type RuntimeOptions } from "@stncil/runtime";
+import {
+  RuntimeEngine,
+  type RenderContext,
+  type RenderResult,
+  type RuntimeOptions,
+} from "@stncil/runtime";
 import { CompilerCache } from "../cache/index";
 import { TemplateLoader, type FileSystem } from "../loader/index";
 import type { IrDocument } from "@stncil/core";

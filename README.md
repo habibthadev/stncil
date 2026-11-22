@@ -16,11 +16,11 @@ A typed, streaming-capable, runtime-agnostic template engine for TypeScript. `.s
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| [`@stncil/core`](packages/core) | Lexer, parser, type checker, and code emitter — compiles `.stn` templates to IR |
-| [`@stncil/runtime`](packages/runtime) | IR executor, HTML/URL/CSS escape utilities, and built-in filters |
-| [`@stncil/engine`](packages/engine) | High-level `Engine` API with template loader and compiler cache |
+| Package                               | Description                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| [`@stncil/core`](packages/core)       | Lexer, parser, type checker, and code emitter — compiles `.stn` templates to IR |
+| [`@stncil/runtime`](packages/runtime) | IR executor, HTML/URL/CSS escape utilities, and built-in filters                |
+| [`@stncil/engine`](packages/engine)   | High-level `Engine` API with template loader and compiler cache                 |
 
 ## Quick Start
 
@@ -45,10 +45,7 @@ import { Engine } from "stncil";
 
 const engine = new Engine();
 
-const result = await engine.compileAndRender(
-  `<h1>Hello {{ name }}</h1>`,
-  { name: "World" }
-);
+const result = await engine.compileAndRender(`<h1>Hello {{ name }}</h1>`, { name: "World" });
 
 console.log(result.html); // <h1>Hello World</h1>
 ```
@@ -74,12 +71,12 @@ const page = `<h1>{{ title }}</h1><p>{{ body }}</p>`;
 // Render page, then inject into layout
 const pageResult = await engine.compileAndRender(page, {
   title: "My Page",
-  body: "Hello world"
+  body: "Hello world",
 });
 
 const final = await engine.compileAndRender(layout, {
   title: "My Page",
-  content: pageResult.html
+  content: pageResult.html,
 });
 ```
 
@@ -227,15 +224,15 @@ stncil/
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm build` | Build all packages |
-| `pnpm test` | Run test suite |
+| Command           | Description             |
+| ----------------- | ----------------------- |
+| `pnpm build`      | Build all packages      |
+| `pnpm test`       | Run test suite          |
 | `pnpm test:watch` | Run tests in watch mode |
-| `pnpm typecheck` | Type-check all packages |
-| `pnpm lint` | Lint source files |
-| `pnpm format` | Format source files |
-| `pnpm clean` | Clean build artifacts |
+| `pnpm typecheck`  | Type-check all packages |
+| `pnpm lint`       | Lint source files       |
+| `pnpm format`     | Format source files     |
+| `pnpm clean`      | Clean build artifacts   |
 
 ## Editor Support
 

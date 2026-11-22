@@ -2,11 +2,7 @@ import { ExprNode } from "../parser/ast";
 import { IrType } from "./types";
 import { Scope } from "./scope";
 
-export function narrowType(
-  condition: ExprNode,
-  scope: Scope,
-  isConsequent: boolean,
-): Scope {
+export function narrowType(condition: ExprNode, scope: Scope, isConsequent: boolean): Scope {
   if (condition.kind === "binary" && condition.op === "!=") {
     const narrowed = isConsequent ? narrowRightNull(condition.left, condition.right, scope) : null;
     if (narrowed) return narrowed;
@@ -42,11 +38,12 @@ function narrowPath(segments: readonly string[], scope: Scope): Scope {
   if (segments.length === 1) {
     const entry = scope.lookup(segments[0]!);
     if (entry && (isNullable(entry.type) || isOptional(entry.type))) {
-      const inner = entry.type.kind === "nullable"
-        ? (entry.type as any).inner as IrType
-        : entry.type.kind === "optional"
-        ? (entry.type as any).inner as IrType
-        : entry.type;
+      const inner =
+        entry.type.kind === "nullable"
+          ? ((entry.type as any).inner as IrType)
+          : entry.type.kind === "optional"
+            ? ((entry.type as any).inner as IrType)
+            : entry.type;
       newScope.declare(segments[0]!, inner, entry.source);
     }
   } else if (segments.length > 1) {
@@ -79,7 +76,10 @@ function narrowNestedField(type: IrType, path: readonly string[]): IrType | null
 }
 
 export function isNullable(type: IrType): boolean {
-  return type.kind === "nullable" || (type.kind === "union" && type.variants.some(v => v.kind === "null"));
+  return (
+    type.kind === "nullable" ||
+    (type.kind === "union" && type.variants.some((v) => v.kind === "null"))
+  );
 }
 
 export function isOptional(type: IrType): boolean {

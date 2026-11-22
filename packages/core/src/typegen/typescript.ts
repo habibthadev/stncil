@@ -14,19 +14,32 @@ export function generateTypeDefinition(ir: IrDocument): string {
   function irTypeToTS(type: IrType, indent = 2): string {
     const pad = " ".repeat(indent);
     switch (type.kind) {
-      case "string": return "string";
-      case "number": return "number";
-      case "boolean": return "boolean";
-      case "date": return "Date";
-      case "null": return "null";
-      case "trusted_html": return "TrustedHTML";
-      case "trusted_js": return "string";
-      case "trusted_css": return "string";
-      case "trusted_url": return "string";
-      case "array": return `Array<${irTypeToTS(type.item, indent)}>`;
-      case "record": return `Record<string, ${irTypeToTS(type.value, indent)}>`;
-      case "nullable": return `${irTypeToTS(type.inner, indent)} | null`;
-      case "optional": return `${irTypeToTS(type.inner, indent)} | undefined`;
+      case "string":
+        return "string";
+      case "number":
+        return "number";
+      case "boolean":
+        return "boolean";
+      case "date":
+        return "Date";
+      case "null":
+        return "null";
+      case "trusted_html":
+        return "TrustedHTML";
+      case "trusted_js":
+        return "string";
+      case "trusted_css":
+        return "string";
+      case "trusted_url":
+        return "string";
+      case "array":
+        return `Array<${irTypeToTS(type.item, indent)}>`;
+      case "record":
+        return `Record<string, ${irTypeToTS(type.value, indent)}>`;
+      case "nullable":
+        return `${irTypeToTS(type.inner, indent)} | null`;
+      case "optional":
+        return `${irTypeToTS(type.inner, indent)} | undefined`;
       case "union": {
         const parts = type.variants.map((v) => irTypeToTS(v, indent));
         return parts.join(" | ");
