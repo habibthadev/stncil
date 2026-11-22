@@ -224,64 +224,60 @@ export class Parser {
       this.consume("COLON", "Expected : after field name");
       const typeExpr = this.parseTypeExpr();
       fields.push({ name: nameTok.value, typeExpr, optional, span: nameTok.span });
+      this.skipSpace();
+      this.match("COMMA");
     }
     return fields;
   }
 
   private parseTypeExpr(): TypeExprNode {
-    while (this.check("LITERAL") && this.peek().value.trim() === "") {
-      this.advance();
+    const variants = [this.parseArrayType()];
+    this.skipSpace();
+    while (this.match("PIPE")) {
+      variants.push(this.parseArrayType());
+      this.skipSpace();
     }
+    return variants.length === 1 ? variants[0]! : { kind: "union", variants };
+  }
+
+  private parseArrayType(): TypeExprNode {
+    let type = this.parseTypeAtom();
+    this.skipSpace();
+    while (this.match("LBRACKET")) {
+      this.consume("RBRACKET", "Array types use empty [] brackets");
+      type = { kind: "array", item: type };
+      this.skipSpace();
+    }
+    return type;
+  }
+
+  private parseTypeAtom(): TypeExprNode {
+    this.skipSpace();
+    if (this.match("NULL")) return { kind: "null" };
+    if (this.match("LPAREN")) {
+      const type = this.parseTypeExpr();
+      this.consume("RPAREN", "Expected ) after grouped type");
+      return type;
+    }
+    if (this.check("LBRACE")) return this.parseObjectType();
     if (this.check("IDENTIFIER")) {
       const name = this.advance().value;
       if (name === "string") return { kind: "string" };
       if (name === "number") return { kind: "number" };
       if (name === "boolean") return { kind: "boolean" };
       if (name === "Date") return { kind: "date" };
-      if (name === "null") return { kind: "null" };
-      return { kind: "named", name };
-    }
-    if (this.check("STRING")) {
-      const value = this.advance().value;
-      return { kind: "union", variants: [{ kind: "string" }, ...this.parseUnionVariants(value)] };
-    }
-    if (this.check("LBRACE")) {
-      return this.parseObjectType();
-    }
-    if (this.check("LBRACE")) {
-      // already handled
-    }
-    throw this.error("Expected type expression");
-  }
-
-  private parseUnionVariants(firstValue?: string): TypeExprNode[] {
-    const variants: TypeExprNode[] = [];
-    if (firstValue !== undefined) {
-      // Already consumed the string literal union variant
-    }
-    while (this.check("OR")) {
-      this.advance();
-      if (this.check("STRING")) {
-        const val = this.advance().value;
-        variants.push({ kind: "string" }); // string union member
-      } else if (this.peek().value === "string") {
-        this.advance();
-        variants.push({ kind: "string" });
-      } else if (this.peek().value === "number") {
-        this.advance();
-        variants.push({ kind: "number" });
-      } else if (this.peek().value === "boolean") {
-        this.advance();
-        variants.push({ kind: "boolean" });
-      } else if (this.peek().value === "null") {
-        this.advance();
-        variants.push({ kind: "null" });
-      } else {
-        const name = this.advance().value;
-        variants.push({ kind: "named", name });
+      if (name === "Record") {
+        this.consume("LT", "Expected < after Record");
+        const key = this.consume("IDENTIFIER", "Expected string record key type");
+        if (key.value !== "string") throw this.error("Record keys must be strings", key.span);
+        this.consume("COMMA", "Expected , after record key type");
+        const value = this.parseTypeExpr();
+        this.consume("GT", "Expected > after record value type");
+        return { kind: "record", value };
       }
+      throw this.error(`Unknown context type: ${name}`);
     }
-    return variants;
+    throw this.error("Expected context type: string, number, boolean, Date, object, or Record");
   }
 
   private parseObjectType(): TypeExprNode {

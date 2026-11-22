@@ -68,6 +68,38 @@ describe("Parser", () => {
     }
   });
 
+  it("parses comma-separated context arrays, records, and unions", () => {
+    const ast = parse(
+      "@context { posts: { title: string, author?: string }[], values: (number | null)[][], scores: Record<string, number>, }",
+    );
+    const context = ast.nodes.find((node) => node.kind === "context_decl");
+    expect(context?.kind).toBe("context_decl");
+    if (context?.kind !== "context_decl") return;
+    expect(context.fields[0]?.typeExpr).toMatchObject({
+      kind: "array",
+      item: { kind: "object", fields: [{ name: "title" }, { name: "author", optional: true }] },
+    });
+    expect(context.fields[1]?.typeExpr).toEqual({
+      kind: "array",
+      item: {
+        kind: "array",
+        item: { kind: "union", variants: [{ kind: "number" }, { kind: "null" }] },
+      },
+    });
+    expect(context.fields[2]?.typeExpr).toEqual({ kind: "record", value: { kind: "number" } });
+  });
+
+  it("rejects malformed and unsupported context types", () => {
+    for (const type of [
+      "number[2]",
+      "Record<number, string>",
+      "MissingType",
+      '"ready" | "busy"',
+      "number |",
+    ])
+      expect(() => parse(`@context { value: ${type} }`)).toThrow();
+  });
+
   it("parses @let binding", () => {
     const ast = parse("@let x = 42");
     const letNode = ast.nodes.find((n) => n.kind === "let");
@@ -120,7 +152,7 @@ describe("Parser", () => {
   });
 
   it("parses @head block", () => {
-    const ast = parse("@head { @title { Title } @meta(name: \"description\", content: desc) }");
+    const ast = parse('@head { @title { Title } @meta(name: "description", content: desc) }');
     const headNode = ast.nodes.find((n) => n.kind === "head_push");
     expect(headNode).toBeDefined();
     if (headNode?.kind === "head_push") {
@@ -178,7 +210,9 @@ describe("Parser", () => {
 
   it("parses @recursive and @recurse", () => {
     const ast = parse("@recursive TreeNode(node) { {{ node.label }} @recurse TreeNode(child) }");
-    const defNode = ast.nodes.find((n) => n.kind === "recursive_def") as RecursiveDefNode | undefined;
+    const defNode = ast.nodes.find((n) => n.kind === "recursive_def") as
+      | RecursiveDefNode
+      | undefined;
     expect(defNode).toBeDefined();
     const callNode = defNode!.body.find((n) => n.kind === "recursive_call");
     expect(callNode).toBeDefined();
@@ -230,13 +264,13 @@ describe("Parser", () => {
   });
 
   it("parses filter chains", () => {
-    const ast = parse('{{ user.name | upper | truncate(10) }}');
+    const ast = parse("{{ user.name | upper | truncate(10) }}");
     const interp = ast.nodes[0];
     expect(interp?.kind).toBe("interp");
   });
 
   it("parses spread props in @render", () => {
-    const ast = parse("@render Card({ ...props, title: \"hi\" })");
+    const ast = parse('@render Card({ ...props, title: "hi" })');
     const renderNode = ast.nodes.find((n) => n.kind === "render");
     expect(renderNode).toBeDefined();
   });
