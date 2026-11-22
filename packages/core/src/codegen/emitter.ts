@@ -174,12 +174,16 @@ export class Emitter {
 
   private emitInterp(node: { expr: ExprNode; escapeContext?: string; trimStart: boolean; trimEnd: boolean; raw?: boolean; span: Span }): void {
     if (this.inScriptBlock) return;
-    if (node.expr.kind === "filter_chain") {
+    if (node.expr.kind === "filter_chain" && node.expr.expr.kind === "path" && !node.raw) {
       this.emitFilterChain(node.expr);
       return;
     }
     const path = this.exprToPath(node.expr);
-    if (!path) return;
+    if (!path) {
+      this.instructions.push({ op: "WRITE_EXPRESSION", expr: this.exprToIrExpr(node.expr),
+        escape: node.raw ? "raw" : "html", nodeId: nextNodeId() });
+      return;
+    }
     if (node.raw) {
       this.instructions.push({ op: "WRITE_TRUSTED", path, nodeId: nextNodeId() });
       return;
@@ -527,7 +531,7 @@ export class Emitter {
           right: this.exprToIrExpr(expr.right),
         };
       case "unary":
-        return { kind: "unary", op: "!", operand: this.exprToIrExpr(expr.operand) };
+        return { kind: "unary", op: expr.op, operand: this.exprToIrExpr(expr.operand) };
       case "ternary":
         return {
           kind: "ternary",
@@ -541,6 +545,12 @@ export class Emitter {
           expr: this.exprToIrExpr(expr.expr),
           filters: expr.filters.map(f => ({ name: f.name, args: f.args.map(a => this.exprToIrExpr(a)) })),
         };
+      case "array":
+        return { kind: "array", items: expr.items.map(item => this.exprToIrExpr(item)) };
+      case "object":
+        return { kind: "object", fields: expr.fields.map(field => ({ name: field.name, value: this.exprToIrExpr(field.value) })) };
+      case "index":
+        return { kind: "index", object: this.exprToIrExpr(expr.object), key: this.exprToIrExpr(expr.key) };
     }
   }
 

@@ -47,6 +47,12 @@ function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState):
       state.output += (inst as WriteLiteralInstruction).value;
       break;
 
+    case "WRITE_EXPRESSION": {
+      const value = evalExpr(inst.expr, ctx);
+      state.output += inst.escape === "raw" ? (value == null ? "" : String(value)) : escapeHtml(value);
+      break;
+    }
+
     case "WRITE_ESCAPED": {
       const val = resolvePath((inst as WriteEscapedInstruction).path, ctx);
       state.output += escapeHtml(val);

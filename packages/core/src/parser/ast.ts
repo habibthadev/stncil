@@ -99,7 +99,10 @@ export type ExprNode =
   | BinaryExprNode
   | UnaryExprNode
   | TernaryExprNode
-  | FilterChainNode;
+  | FilterChainNode
+  | { readonly kind: "array"; readonly items: ExprNode[]; readonly span: Span }
+  | { readonly kind: "object"; readonly fields: { name: string; value: ExprNode }[]; readonly span: Span }
+  | { readonly kind: "index"; readonly object: ExprNode; readonly key: ExprNode; readonly span: Span };
 
 export interface PathExprNode {
   readonly kind: "path";
@@ -140,7 +143,7 @@ export interface BinaryExprNode {
 
 export interface UnaryExprNode {
   readonly kind: "unary";
-  readonly op: "!";
+  readonly op: "!" | "-";
   readonly operand: ExprNode;
   readonly span: Span;
 }
@@ -153,7 +156,7 @@ export interface TernaryExprNode {
   readonly span: Span;
 }
 
-export type BinaryOp = "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||";
+export type BinaryOp = "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||" | "+" | "-" | "*" | "/" | "%" | "~";
 
 export interface IfNode extends BaseNode {
   readonly kind: "if";

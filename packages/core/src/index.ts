@@ -26,7 +26,7 @@ export interface CompileResult {
 
 export {
   IrDocument, IrInstruction, IrExpr, OutputMode, IrType,
-  WriteLiteralInstruction, WriteEscapedInstruction,
+  WriteLiteralInstruction, WriteExpressionInstruction, WriteEscapedInstruction,
   WriteUrlEscapedInstruction, WriteJsEscapedInstruction,
   WriteCssEscapedInstruction, WriteTrustedInstruction,
   WriteFilterInstruction, WriteJsonInstruction, WriteNonceInstruction,

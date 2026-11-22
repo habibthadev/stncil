@@ -23,6 +23,12 @@ const BINARY_OPS: Record<string, { prec: number; op: BinaryOp }> = {
   ">":  { prec: 4, op: ">" },
   "<=": { prec: 4, op: "<=" },
   ">=": { prec: 4, op: ">=" },
+  "~": { prec: 5, op: "~" },
+  "+": { prec: 6, op: "+" },
+  "-": { prec: 6, op: "-" },
+  "*": { prec: 7, op: "*" },
+  "/": { prec: 7, op: "/" },
+  "%": { prec: 7, op: "%" },
 };
 
 export class Parser {
@@ -48,6 +54,7 @@ export class Parser {
   }
 
   private parseNode(): AstNode {
+    if (["PLUS", "STAR", "SLASH", "PERCENT", "CONCAT", "LBRACKET", "RBRACKET"].includes(this.peek().type)) return this.parseContentBlock();
     if (this.check("OUTPUT")) return this.parseOutputMode();
     if (this.check("CONTEXT")) return this.parseContextDecl();
     if (this.check("IF") || this.check("TRIM_IF")) return this.parseIf();
@@ -212,6 +219,7 @@ export class Parser {
     "DOT", "LPAREN", "RPAREN", "COMMA", "COLON", "LBRACE",
     "GT", "LT", "MINUS", "EQUALS", "NOT", "AND", "OR", "PIPE", "QUESTION", "SPREAD",
     "EQ", "NEQ", "GTE", "LTE"
+    , "PLUS", "STAR", "SLASH", "PERCENT", "CONCAT", "LBRACKET", "RBRACKET"
   ]);
 
   private parseContentBlock(): LiteralNode {
@@ -782,7 +790,24 @@ export class Parser {
   }
 
   private parseExpr(): ExprNode {
-    return this.parseTernary();
+    let expr = this.parseTernary();
+    if (this.check("PIPE")) {
+      const filters: FilterNode[] = [];
+      while (this.match("PIPE")) {
+        const name = this.consume("IDENTIFIER", "Expected filter name after |");
+        const args: ExprNode[] = [];
+        if (this.match("LPAREN")) {
+          this.skipSpace();
+          if (!this.check("RPAREN")) {
+            do { args.push(this.parseExpr()); } while (this.match("COMMA"));
+          }
+          this.consume("RPAREN", "Expected ) after filter arguments");
+        }
+        filters.push({ name: name.value, args, span: name.span });
+      }
+      expr = { kind: "filter_chain", expr, filters, span: expr.span };
+    }
+    return expr;
   }
 
   private parseTernary(): ExprNode {
@@ -804,7 +829,7 @@ export class Parser {
         if (this.lineBoundExpression && this.peek().value.includes("\n")) break;
         this.advance();
       }
-      const opInfo = BINARY_OPS[this.peek().value];
+      const opInfo = Object.hasOwn(BINARY_OPS, this.peek().value) ? BINARY_OPS[this.peek().value] : undefined;
       if (!opInfo || opInfo.prec < minPrec) break;
       this.advance();
       const right = this.parseBinary(opInfo.prec + 1);
@@ -820,12 +845,29 @@ export class Parser {
   }
 
   private parseUnary(): ExprNode {
-    if (this.check("NOT") || this.peek().value === "!") {
+    this.skipSpace();
+    if (this.check("NOT") || this.check("MINUS")) {
       const tok = this.advance();
       const operand = this.parseUnary();
-      return { kind: "unary", op: "!", operand, span: tok.span };
+      return { kind: "unary", op: tok.type === "MINUS" ? "-" : "!", operand, span: tok.span };
     }
-    return this.parsePrimary();
+    let expr = this.parsePrimary();
+    while (this.check("DOT") || this.check("LBRACKET")) {
+      if (this.match("DOT")) {
+        const field = this.consume("IDENTIFIER", "Expected property name after .");
+        if (expr.kind === "path") {
+          expr = { ...expr, segments: [...expr.segments, field.value] };
+        } else {
+          expr = { kind: "index", object: expr, key: { kind: "string", value: field.value, span: field.span }, span: expr.span };
+        }
+      } else {
+        this.advance();
+        const key = this.parseExpr();
+        this.consume("RBRACKET", "Expected ] after index");
+        expr = { kind: "index", object: expr, key, span: expr.span };
+      }
+    }
+    return expr;
   }
 
   private parsePrimary(): ExprNode {
@@ -852,10 +894,6 @@ export class Parser {
     if (this.check("IDENTIFIER")) {
       const tok = this.advance();
       const segments: string[] = [tok.value];
-      while (this.match("DOT")) {
-        const segTok = this.consume("IDENTIFIER", "Expected identifier after .");
-        segments.push(segTok.value);
-      }
       return { kind: "path", segments, span: tok.span };
     }
     if (this.check("INTERP_OPEN") || this.check("INTERP_OPEN_TRIM") || this.check("INTERP_OPEN_RAW")) {
@@ -866,6 +904,33 @@ export class Parser {
       const expr = this.parseExpr();
       this.consume("RPAREN", "Expected ) after expression");
       return expr;
+    }
+    if (this.match("LBRACKET")) {
+      const span = this.lookbehind!.span;
+      const items: ExprNode[] = [];
+      this.skipSpace();
+      if (!this.check("RBRACKET")) {
+        do { items.push(this.parseExpr()); this.skipSpace(); } while (this.match("COMMA"));
+      }
+      this.consume("RBRACKET", "Expected ] after array literal");
+      return { kind: "array", items, span };
+    }
+    if (this.check("LBRACE") || (this.check("LITERAL") && this.peek().value === "{")) {
+      const span = this.advance().span;
+      const fields: { name: string; value: ExprNode }[] = [];
+      this.skipSpace();
+      while (!this.check("RBRACE") && !(this.check("LITERAL") && this.peek().value === "}")) {
+        const name = this.advance();
+        if (name.type !== "IDENTIFIER" && name.type !== "STRING") throw this.error("Expected object field name", name.span);
+        this.consume("COLON", "Expected : after object field name");
+        fields.push({ name: name.value, value: this.parseExpr() });
+        this.skipSpace();
+        if (!this.match("COMMA")) break;
+        this.skipSpace();
+      }
+      const close = this.advance();
+      if (close.value !== "}") throw this.error("Expected } after object literal", close.span);
+      return { kind: "object", fields, span };
     }
     throw this.error(`Unexpected token in expression: ${this.peek().type}`);
   }

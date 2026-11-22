@@ -55,12 +55,18 @@ const HEADER_KEYWORDS = new Set<TokenType>([
   "TRIM_IF", "TRIM_EACH", "TRIM_ASYNC", "TRIM_CACHE", "TRIM_STYLE", "TRIM_SCRIPT",
 ]);
 
+const OPERATORS: Readonly<Record<string, TokenType>> = {
+  "+": "PLUS", "*": "STAR", "/": "SLASH", "%": "PERCENT", "~": "CONCAT",
+  "[": "LBRACKET", "]": "RBRACKET",
+};
+
 export class Lexer {
   private pos = 0;
   private line = 1;
   private col = 1;
   private tokens: Token[] = [];
   private inInterpolation = false;
+  private interpolationBraces = 0;
   private header: TokenType | null = null;
   private headerParens = 0;
   private headerBraces = 0;
@@ -101,17 +107,17 @@ export class Lexer {
         continue;
       }
       if (this.inInterpolation) {
-        if (this.match("}}}")) {
+        if (this.interpolationBraces === 0 && this.match("}}}")) {
           this.addToken("INTERP_CLOSE_RAW", "}}}");
           this.inInterpolation = false;
           continue;
         }
-        if (this.match("-}}")) {
+        if (this.interpolationBraces === 0 && this.match("-}}")) {
           this.addToken("INTERP_CLOSE_TRIM", "-}}");
           this.inInterpolation = false;
           continue;
         }
-        if (this.match("}}")) {
+        if (this.interpolationBraces === 0 && this.match("}}")) {
           this.addToken("INTERP_CLOSE", "}}");
           this.inInterpolation = false;
           continue;
@@ -124,14 +130,15 @@ export class Lexer {
         }
       }
       if (/[a-zA-Z_]/.test(this.peek())) {
+        const start = this.pos, line = this.line, col = this.col;
         const ident = this.readWord();
-        if (ident === "true" || ident === "false") this.addToken("BOOLEAN", ident);
-        else if (ident === "null") this.addToken("NULL", ident);
-        else this.addToken("IDENTIFIER", ident);
+        this.addTokenSpan(ident === "true" || ident === "false" ? "BOOLEAN" : ident === "null" ? "NULL" : "IDENTIFIER", ident, start, line, col);
         continue;
       }
-      if (/[0-9]/.test(this.peek())) {
-        this.addToken("NUMBER", this.readNumber());
+      if (/[0-9]/.test(this.peek()) || (this.peek() === "." && /[0-9]/.test(this.source[this.pos + 1] ?? ""))) {
+        const start = this.pos, line = this.line, col = this.col;
+        const number = this.readNumber();
+        this.addTokenSpan("NUMBER", number, start, line, col);
         continue;
       }
       if (this.peek() === '"' || this.peek() === "'") {
@@ -177,7 +184,8 @@ export class Lexer {
           }
           this.addToken("LBRACE", "{"); this.pos++; this.col++; continue;
         }
-        this.addToken("LITERAL", "{"); this.pos++; this.col++; continue;
+        this.interpolationBraces++;
+        this.addToken("LBRACE", "{"); this.pos++; this.col++; continue;
       }
       if (this.peek() === "}") {
         if (this.inInterpolation) {
@@ -185,7 +193,8 @@ export class Lexer {
           if (next === "}") {
             // }} should be handled above
           }
-          this.addToken("LITERAL", "}"); this.pos++; this.col++; continue;
+          this.interpolationBraces--;
+          this.addToken("RBRACE", "}"); this.pos++; this.col++; continue;
         }
         if (this.styleDepth > 0) this.styleDepth--;
         if (this.headerBraces > 0 && --this.headerBraces === 0 && this.header === "CONTEXT") {
@@ -194,6 +203,8 @@ export class Lexer {
         this.addToken("RBRACE", "}"); this.pos++; this.col++; continue;
       }
       if (this.peek() === ",") { this.addToken("COMMA", ","); this.pos++; this.col++; continue; }
+      const operator = OPERATORS[this.peek()];
+      if (operator) { this.addToken(operator, this.peek()); this.pos++; this.col++; continue; }
       if (this.peek() === ":") { this.addToken("COLON", ":"); this.pos++; this.col++; continue; }
       if (this.startsWith(">=")) { this.addToken("GTE", ">="); this.pos += 2; this.col += 2; continue; }
       if (this.peek() === ">") { this.addToken("GT", ">"); this.pos++; this.col++; continue; }
@@ -368,7 +379,7 @@ export class Lexer {
         break;
       }
       if (/[a-zA-Z0-9_"']/.test(ch)) break;
-      if ("{}()<>,:?|!;=-.".indexOf(ch) !== -1 || this.startsWith("||") || this.startsWith("&&") || this.startsWith("...")) break;
+      if ("{}[]()<>,:?|!;=+*/%~-.".indexOf(ch) !== -1 || this.startsWith("||") || this.startsWith("&&") || this.startsWith("...")) break;
       if (ch === "\n") {
         this.line++; this.col = 1;
         if (this.headerParens === 0 && this.headerBraces === 0) this.header = null;
@@ -393,12 +404,9 @@ export class Lexer {
   }
 
   private readNumber(): string {
-    let num = "";
-    while (this.pos < this.source.length && /[0-9.]/.test(this.peek())) {
-      num += this.peek();
-      this.pos++;
-      this.col++;
-    }
+    const num = /^(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/.exec(this.source.slice(this.pos))![0];
+    this.pos += num.length;
+    this.col += num.length;
     return num;
   }
 

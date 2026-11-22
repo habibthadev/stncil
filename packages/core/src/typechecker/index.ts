@@ -349,11 +349,24 @@ export class TypeChecker {
       case "binary":
         return this.inferBinaryType(expr, errorSpan);
       case "unary":
-        return { kind: "boolean" };
+        return { kind: expr.op === "-" ? "number" : "boolean" };
       case "ternary":
         return this.inferExprType(expr.consequent, errorSpan);
       case "filter_chain":
         return this.inferExprType(expr.expr, errorSpan);
+      case "array": {
+        const variants = expr.items.map(item => this.inferExprType(item, errorSpan)).filter((type): type is IrType => type !== null);
+        return { kind: "array", item: variants.length === 1 ? variants[0]! : { kind: "union", variants } };
+      }
+      case "object":
+        return { kind: "object", fields: Object.fromEntries(expr.fields.map(field => [field.name, this.inferExprType(field.value, errorSpan) ?? { kind: "null" }])) };
+      case "index": {
+        const object = this.inferExprType(expr.object, errorSpan);
+        if (object?.kind === "array") return object.item;
+        if (object?.kind === "record") return object.value;
+        if (object?.kind === "object" && expr.key.kind === "string") return object.fields[expr.key.value] ?? null;
+        return null;
+      }
     }
   }
 
@@ -363,7 +376,11 @@ export class TypeChecker {
       case "<": case ">": case "<=": case ">=":
         return { kind: "boolean" };
       case "&&": case "||":
-        return this.inferExprType(expr.left, errorSpan);
+        return { kind: "boolean" };
+      case "~":
+        return { kind: "string" };
+      case "+": case "-": case "*": case "/": case "%":
+        return { kind: "number" };
     }
   }
 

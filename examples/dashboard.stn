@@ -70,7 +70,7 @@
         <div class="stat-card">
           <p class="label">Active Users</p>
           <p class="value green">{{ active_users }}</p>
-          <p class="label" style="margin-top: .5rem;">{{ (active_users / stats.total_users * 100) | number_format(%.1f) }}% of total</p>
+          <p class="label" style="margin-top: .5rem;">{{ (active_users / stats.total_users * 100) | number_format(1) }}% of total</p>
         </div>
         <div class="stat-card">
           <p class="label">Revenue</p>

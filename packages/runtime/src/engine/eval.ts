@@ -1,5 +1,5 @@
 import type { IrExpr } from "@stncil/core";
-import { resolvePath, type RenderContext } from "./context";
+import { resolvePath, resolveMember, type RenderContext } from "./context";
 import { getFilter } from "../filters";
 
 export function evalExpr(expr: IrExpr, ctx: RenderContext): unknown {
@@ -21,7 +21,7 @@ export function evalExpr(expr: IrExpr, ctx: RenderContext): unknown {
       return evalBinary(expr.op, left, evalExpr(expr.right, ctx));
     }
     case "unary":
-      return !evalExpr(expr.operand, ctx);
+      return expr.op === "-" ? -arithmeticNumber(evalExpr(expr.operand, ctx)) : !evalExpr(expr.operand, ctx);
     case "ternary":
       return evalExpr(expr.condition, ctx)
         ? evalExpr(expr.consequent, ctx)
@@ -37,6 +37,12 @@ export function evalExpr(expr: IrExpr, ctx: RenderContext): unknown {
       }
       return value;
     }
+    case "array":
+      return expr.items.map(item => evalExpr(item, ctx));
+    case "object":
+      return Object.fromEntries(expr.fields.map(field => [field.name, evalExpr(field.value, ctx)]));
+    case "index":
+      return resolveMember(evalExpr(expr.object, ctx), evalExpr(expr.key, ctx));
   }
 }
 
@@ -48,6 +54,22 @@ function evalBinary(op: string, left: unknown, right: unknown): unknown {
     case ">": return (left as number) > (right as number);
     case "<=": return (left as number) <= (right as number);
     case ">=": return (left as number) >= (right as number);
+    case "~": return String(left ?? "") + String(right ?? "");
+    case "+": case "-": case "*": case "/": case "%": {
+      const a = arithmeticNumber(left);
+      const b = arithmeticNumber(right);
+      if ((op === "/" || op === "%") && b === 0) throw new RangeError("Division by zero");
+      const result = op === "+" ? a + b : op === "-" ? a - b : op === "*" ? a * b : op === "/" ? a / b : a % b;
+      if (!Number.isFinite(result)) throw new RangeError("Arithmetic result must be finite");
+      return result;
+    }
     default: return undefined;
   }
+}
+
+function arithmeticNumber(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new TypeError("Arithmetic requires finite numbers");
+  }
+  return value;
 }
