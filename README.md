@@ -142,6 +142,17 @@ block, and iteration bindings can shadow outer names.
 }
 ```
 
+Register fetchers on the engine with `new Engine({ fetchers: { fetchUser } })`.
+Each fetcher receives its template arguments followed by `{ signal }`; the signal
+is aborted when a stream is cancelled. Fetcher arguments are unknown values and
+should be validated in the adapter. Both `binding = fetcher(...)` and
+`binding from fetcher(...)` work. Sibling async blocks start together; streamed
+HTML preserves document order. `@error` renders the fetch failure when provided.
+
+The runtime's synchronous `render()` handles synchronous IR. Use `renderAsync()`
+or the high-level engine for async templates. Ordered streams await async blocks;
+they do not send DOM replacement scripts for `@loading` bodies.
+
 ### Layout and Slots
 
 ```stncil

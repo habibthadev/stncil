@@ -48,7 +48,7 @@ export function exec(
   }
 }
 
-function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState): void {
+export function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState): void {
   switch (inst.op) {
     case "WRITE_LITERAL":
       state.output += (inst as WriteLiteralInstruction).value;
@@ -232,5 +232,8 @@ function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState):
     case "RENDER_PARTIAL":
     case "SLOT_TARGET":
       break;
+    case "ASYNC_BLOCK":
+    case "PARALLEL_GROUP":
+      throw new Error("Async templates require renderAsync() or renderStream()");
   }
 }

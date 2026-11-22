@@ -370,8 +370,11 @@ export class Parser {
     const tok = this.advance();
     this.consume("LPAREN", "Expected ( after @async");
     const bindingTok = this.consume("IDENTIFIER", "Expected binding name in @async");
-    const fromTok = this.consume("IDENTIFIER", "Expected 'from' in @async");
-    if (fromTok.value !== "from") throw this.error("Expected 'from' in @async", fromTok.span);
+    this.skipSpace();
+    if (!this.match("EQUALS")) {
+      const fromTok = this.consume("IDENTIFIER", "Expected 'from' or = in @async");
+      if (fromTok.value !== "from") throw this.error("Expected 'from' or = in @async", fromTok.span);
+    }
     const fetcherTok = this.consume("IDENTIFIER", "Expected fetcher name in @async");
     const args: ExprNode[] = [];
     if (this.match("LPAREN")) {
