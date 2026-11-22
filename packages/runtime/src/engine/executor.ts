@@ -23,18 +23,29 @@ import { evalExpr } from "./eval";
 import { escapeHtml } from "../escape/html";
 import { escapeUrl } from "../escape/url";
 import { escapeCss } from "../escape/css";
-import { getFilter } from "../filters/index";
+import { resolveFilter, type FilterFn } from "../filters/index";
+import { escapeJs } from "../escape/js";
+import { validateUrl } from "../escape/url";
+
+export interface OutputOptions {
+  readonly csrfToken?: string;
+  readonly nonce?: string;
+  readonly assetManifest?: Readonly<Record<string, string>>;
+  readonly filters?: Readonly<Record<string, FilterFn>>;
+}
 
 export interface ExecutorState {
   output: string;
+  options: OutputOptions;
   variables: Record<string, unknown>;
   recursiveDefs: Map<string, { param: string; body: readonly IrInstruction[]; maxDepth: number }>;
   depth: Map<string, number>;
 }
 
-export function createExecutorState(): ExecutorState {
+export function createExecutorState(options: OutputOptions = {}): ExecutorState {
   return {
     output: "",
+    options,
     variables: Object.create(null),
     recursiveDefs: new Map(),
     depth: new Map(),
@@ -65,7 +76,7 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
       break;
 
     case "WRITE_EXPRESSION": {
-      const value = evalExpr(inst.expr, ctx);
+      const value = evalExpr(inst.expr, ctx, state.options.filters);
       state.output +=
         inst.escape === "raw" ? (value == null ? "" : String(value)) : escapeHtml(value);
       break;
@@ -99,9 +110,9 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
       const fi = inst as WriteFilterInstruction;
       let val: unknown = resolvePath(fi.path, ctx);
       for (const f of fi.filters) {
-        const args = f.args.map((a: IrExpr) => evalExpr(a, ctx));
-        const fn = getFilter(f.name);
-        if (fn) val = fn(val, ...args);
+        const fn = resolveFilter(f.name, state.options.filters);
+        const args = f.args.map((a: IrExpr) => evalExpr(a, ctx, state.options.filters));
+        val = fn(val, ...args);
       }
       state.output += val == null ? "" : escapeHtml(val);
       break;
@@ -109,28 +120,35 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
 
     case "WRITE_JSON": {
       const ji = inst as WriteJsonInstruction;
-      const val = resolvePath(ji.path, ctx);
-      state.output += JSON.stringify(val);
+      const val = ji.expr
+        ? evalExpr(ji.expr, ctx, state.options.filters)
+        : resolvePath(ji.path, ctx);
+      state.output += escapeJs(val);
       break;
     }
 
     case "WRITE_NONCE":
-      state.output += "";
+      if (!state.options.nonce) throw new Error("CSP nonce is not provided");
+      state.output += escapeHtml(state.options.nonce);
       break;
 
     case "WRITE_ASSET":
-      state.output += "";
+      if (state.options.assetManifest && !Object.hasOwn(state.options.assetManifest, inst.path))
+        throw new Error(`Asset "${inst.path}" is not in the manifest`);
+      state.output += escapeHtml(
+        validateUrl(state.options.assetManifest?.[inst.path] ?? inst.path),
+      );
       break;
 
     case "IF": {
       const ii = inst as IfInstruction;
-      const cond = evalExpr(ii.condition, ctx);
+      const cond = evalExpr(ii.condition, ctx, state.options.filters);
       if (cond) {
         exec(ii.consequent, ctx, state);
       } else {
         let matched = false;
         for (const ei of ii.elseIfs) {
-          if (evalExpr(ei.condition, ctx)) {
+          if (evalExpr(ei.condition, ctx, state.options.filters)) {
             exec(ei.body, ctx, state);
             matched = true;
             break;
@@ -145,7 +163,7 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
 
     case "EACH": {
       const ei = inst as EachInstruction;
-      const source = evalExpr(ei.source, ctx);
+      const source = evalExpr(ei.source, ctx, state.options.filters);
       const arr = Array.isArray(source) ? source : [];
       if (arr.length === 0) {
         exec(ei.empty, ctx, state);
@@ -176,7 +194,7 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
 
     case "LET": {
       const li = inst as LetInstruction;
-      state.variables[li.name] = evalExpr(li.value, ctx);
+      state.variables[li.name] = evalExpr(li.value, ctx, state.options.filters);
       ctx[li.name] = state.variables[li.name];
       break;
     }
@@ -222,7 +240,7 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
         if (curDepth >= def.maxDepth) return;
         state.depth.set(rci.name, curDepth + 1);
         try {
-          const arg = evalExpr(rci.arg, ctx);
+          const arg = evalExpr(rci.arg, ctx, state.options.filters);
           const callCtx: RenderContext = { ...ctx, [def.param]: arg };
           exec(def.body, callCtx, state);
         } finally {
@@ -244,9 +262,12 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
     case "HEAD_PUSH":
     case "STYLES_TARGET":
     case "SCRIPTS_TARGET":
-    case "CSRF":
     case "DEBUG":
     case "TRANSLATE":
+      break;
+    case "CSRF":
+      if (!state.options.csrfToken) throw new Error("CSRF token is not provided");
+      state.output += `<input type="hidden" name="_csrf" value="${escapeHtml(state.options.csrfToken)}">`;
       break;
     case "ASYNC_BLOCK":
     case "PARALLEL_GROUP":

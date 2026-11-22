@@ -141,7 +141,7 @@
   <section>
     <h2>Escaping</h2>
     <p>{{ unsafe_html }}</p>
-    <a href='/search?q={{ query }}'>Search</a>
+    <a href='/search?q={{ query | url_encode }}'>Search</a>
     <div style='background-color: {{ color_value }}'>Color</div>
     <div>{{ unsafe_html }}</div>
   </section>

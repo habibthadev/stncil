@@ -35,6 +35,7 @@ export class Engine {
     this.compileOptions = {
       strict: options.strict ?? false,
       debug: options.debug ?? true,
+      ...(options.assetManifest ? { assetManifest: options.assetManifest } : {}),
     };
   }
 

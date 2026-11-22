@@ -21,8 +21,6 @@
 <body>
   <h1>{{ title }}</h1>
 
-  @csrf
-
   @if (flash_success) {
     <div class="success">{{ flash_success }}</div>
   }

@@ -1,11 +1,11 @@
 import type { IrInstruction, IrDocument } from "@stncil/core";
 import { evalExpr } from "./eval";
-import { createExecutorState, execOne, type ExecutorState } from "./executor";
+import { createExecutorState, execOne, type ExecutorState, type OutputOptions } from "./executor";
 import type { RenderContext } from "./context";
 
 export type Fetcher = (...args: unknown[]) => unknown | Promise<unknown>;
 
-export interface RuntimeOptions {
+export interface RuntimeOptions extends OutputOptions {
   readonly fetchers?: Readonly<Record<string, Fetcher>>;
   readonly signal?: AbortSignal;
   readonly resolveTemplate?: (path: string, fromFile: string) => Promise<IrDocument>;
@@ -44,7 +44,7 @@ function awaitWithSignal<T>(promise: Promise<T>, signal: AbortSignal): Promise<T
 }
 
 function cloneState(parent: ExecutorState): ExecutorState {
-  const state = createExecutorState();
+  const state = createExecutorState(parent.options);
   state.recursiveDefs = new Map(parent.recursiveDefs);
   state.depth = new Map(parent.depth);
   return state;
@@ -75,19 +75,21 @@ export function createRenderPlan(
   for (const instruction of instructions) {
     switch (instruction.op) {
       case "LET":
-        scope[instruction.name] = evalExpr(instruction.value, scope);
+        scope[instruction.name] = evalExpr(instruction.value, scope, options.filters);
         break;
       case "IF": {
-        const branch = evalExpr(instruction.condition, scope)
+        const branch = evalExpr(instruction.condition, scope, options.filters)
           ? instruction.consequent
-          : (instruction.elseIfs.find((branch) => evalExpr(branch.condition, scope))?.body ??
+          : (instruction.elseIfs.find((branch) =>
+              evalExpr(branch.condition, scope, options.filters),
+            )?.body ??
             instruction.alternate ??
             []);
         appendPlan(createRenderPlan(branch, scope, state, options));
         break;
       }
       case "EACH": {
-        const source = evalExpr(instruction.source, scope);
+        const source = evalExpr(instruction.source, scope, options.filters);
         const items = Array.isArray(source) ? source : [];
         if (items.length === 0)
           appendPlan(createRenderPlan(instruction.empty, scope, state, options));
@@ -122,7 +124,7 @@ export function createRenderPlan(
               : undefined;
           if (typeof fetcher !== "function")
             throw new Error(`Fetcher "${instruction.fetcher}" is not registered`);
-          const args = instruction.args.map((arg) => evalExpr(arg, snapshot));
+          const args = instruction.args.map((arg) => evalExpr(arg, snapshot, options.filters));
           return fetcher(...args, { signal: options.signal });
         });
         append(
@@ -180,14 +182,14 @@ export function createRenderPlan(
           }
         } else {
           for (const spread of instruction.spreads ?? []) {
-            const value = evalExpr(spread, snapshot);
+            const value = evalExpr(spread, snapshot, options.filters);
             if (value == null || typeof value !== "object" || Array.isArray(value)) {
               throw new TypeError("Partial prop spread requires an object");
             }
             Object.assign(props, value);
           }
           for (const [name, expr] of Object.entries(instruction.props))
-            props[name] = evalExpr(expr, snapshot);
+            props[name] = evalExpr(expr, snapshot, options.filters);
         }
         const work = resolver(instruction.template, options.sourceFile).then((document) =>
           joinChunks(
@@ -247,7 +249,7 @@ export function createRenderPlan(
           appendPlan(
             createRenderPlan(
               definition.body,
-              { ...scope, [definition.param]: evalExpr(instruction.arg, scope) },
+              { ...scope, [definition.param]: evalExpr(instruction.arg, scope, options.filters) },
               state,
               options,
             ),

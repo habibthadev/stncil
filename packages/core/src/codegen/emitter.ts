@@ -13,7 +13,7 @@ import {
   WriteLiteralInstruction,
 } from "./ir";
 import { generateScopeHash } from "./scope-hash";
-import { Span } from "../error";
+import { Span, StncilError } from "../error";
 
 let nodeIdCounter = 0;
 function nextNodeId(): string {
@@ -144,9 +144,12 @@ export class Emitter {
         break;
       case "json":
         {
-          const jPath = this.exprToPath(node.expr);
-          if (jPath)
-            this.instructions.push({ op: "WRITE_JSON", path: jPath, nodeId: nextNodeId() });
+          this.instructions.push({
+            op: "WRITE_JSON",
+            path: this.exprToPath(node.expr) ?? [],
+            expr: this.exprToIrExpr(node.expr),
+            nodeId: nextNodeId(),
+          });
         }
         break;
       case "nonce_ref":
@@ -194,6 +197,18 @@ export class Emitter {
     span: Span;
   }): void {
     if (this.inScriptBlock) return;
+    if (node.expr.kind === "filter_chain" && node.expr.filters.at(-1)?.name === "trust") {
+      const context = node.expr.filters.at(-1)!.args[0];
+      if (context?.kind !== "string" || context.value !== "html") {
+        throw new StncilError('trust requires the literal context "html"');
+      }
+      const remaining = node.expr.filters.slice(0, -1);
+      const expression: ExprNode = remaining.length
+        ? { ...node.expr, filters: remaining } : node.expr.expr;
+      this.instructions.push({ op: "WRITE_EXPRESSION", expr: this.exprToIrExpr(expression),
+        escape: "raw", nodeId: nextNodeId() });
+      return;
+    }
     if (node.expr.kind === "filter_chain" && node.expr.expr.kind === "path" && !node.raw) {
       this.emitFilterChain(node.expr);
       return;

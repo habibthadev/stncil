@@ -1,8 +1,12 @@
 import type { IrExpr } from "@stncil/core";
 import { resolvePath, resolveMember, type RenderContext } from "./context";
-import { getFilter } from "../filters";
+import { resolveFilter, type FilterFn } from "../filters";
 
-export function evalExpr(expr: IrExpr, ctx: RenderContext): unknown {
+export function evalExpr(
+  expr: IrExpr,
+  ctx: RenderContext,
+  filters?: Readonly<Record<string, FilterFn>>,
+): unknown {
   switch (expr.kind) {
     case "path":
       return resolvePath(expr.segments, ctx);
@@ -15,38 +19,36 @@ export function evalExpr(expr: IrExpr, ctx: RenderContext): unknown {
     case "null":
       return null;
     case "binary": {
-      const left = evalExpr(expr.left, ctx);
-      if (expr.op === "&&") return Boolean(left) && Boolean(evalExpr(expr.right, ctx));
-      if (expr.op === "||") return Boolean(left) || Boolean(evalExpr(expr.right, ctx));
-      return evalBinary(expr.op, left, evalExpr(expr.right, ctx));
+      const left = evalExpr(expr.left, ctx, filters);
+      if (expr.op === "&&") return Boolean(left) && Boolean(evalExpr(expr.right, ctx, filters));
+      if (expr.op === "||") return Boolean(left) || Boolean(evalExpr(expr.right, ctx, filters));
+      return evalBinary(expr.op, left, evalExpr(expr.right, ctx, filters));
     }
     case "unary":
       return expr.op === "-"
-        ? -arithmeticNumber(evalExpr(expr.operand, ctx))
-        : !evalExpr(expr.operand, ctx);
+        ? -arithmeticNumber(evalExpr(expr.operand, ctx, filters))
+        : !evalExpr(expr.operand, ctx, filters);
     case "ternary":
-      return evalExpr(expr.condition, ctx)
-        ? evalExpr(expr.consequent, ctx)
-        : evalExpr(expr.alternate, ctx);
+      return evalExpr(expr.condition, ctx, filters)
+        ? evalExpr(expr.consequent, ctx, filters)
+        : evalExpr(expr.alternate, ctx, filters);
     case "filter_chain": {
-      let value = evalExpr(expr.expr, ctx);
+      let value = evalExpr(expr.expr, ctx, filters);
       for (const f of expr.filters) {
-        const fn = getFilter(f.name);
-        if (fn) {
-          const args = f.args.map((a: IrExpr) => evalExpr(a, ctx));
-          value = fn(value, ...args);
-        }
+        const fn = resolveFilter(f.name, filters);
+        const args = f.args.map((a: IrExpr) => evalExpr(a, ctx, filters));
+        value = fn(value, ...args);
       }
       return value;
     }
     case "array":
-      return expr.items.map((item) => evalExpr(item, ctx));
+      return expr.items.map((item) => evalExpr(item, ctx, filters));
     case "object":
       return Object.fromEntries(
-        expr.fields.map((field) => [field.name, evalExpr(field.value, ctx)]),
+        expr.fields.map((field) => [field.name, evalExpr(field.value, ctx, filters)]),
       );
     case "index":
-      return resolveMember(evalExpr(expr.object, ctx), evalExpr(expr.key, ctx));
+      return resolveMember(evalExpr(expr.object, ctx, filters), evalExpr(expr.key, ctx, filters));
   }
 }
 

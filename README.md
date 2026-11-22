@@ -95,6 +95,18 @@ Template paths read only own object properties. Inherited fields and prototype
 methods are unavailable; plain objects, JSON records, and array indices work as
 usual. Raw HTML output should contain only content your application trusts.
 
+HTML escaping is the default. Use `url_encode` for a URL component, `url` to
+validate a complete URL's scheme, and `@json(value)` to insert a JSON value in a
+script or JSON document. `@json` escapes characters that could close a script
+element. It is a JSON value directive, not an HTML-attribute directive.
+Unknown filters are render errors. Custom filters can be registered per engine
+through the `filters` option.
+
+`@csrf` emits a hidden `_csrf` field and requires a `csrfToken` render option.
+The application must validate that token on submission. `@nonce` requires the
+application's CSP `nonce`; `@asset` reads `assetManifest` when provided. Tokens
+and nonces belong to the application and are never invented by the renderer.
+
 ### Conditional Blocks
 
 ```stncil

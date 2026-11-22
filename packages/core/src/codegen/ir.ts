@@ -128,6 +128,7 @@ export interface WriteFilterInstruction extends BaseInstruction {
 export interface WriteJsonInstruction extends BaseInstruction {
   readonly op: "WRITE_JSON";
   readonly path: readonly string[];
+  readonly expr?: IrExpr;
 }
 
 export interface WriteNonceInstruction extends BaseInstruction {

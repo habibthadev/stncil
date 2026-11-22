@@ -61,7 +61,7 @@ export class RuntimeEngine {
     this.options.signal?.addEventListener("abort", abort, { once: true });
     if (this.options.signal?.aborted) abort();
     try {
-      const chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(), {
+      const chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(this.options), {
         ...this.options,
         signal: controller.signal,
         sourceFile: this.doc.sourceFile,
@@ -77,7 +77,7 @@ export class RuntimeEngine {
   }
 
   render(ctx: RenderContext = {}): RenderResult {
-    const state = createExecutorState();
+    const state = createExecutorState(this.options);
     const mergedCtx: RenderContext = ctx;
     const errors: Error[] = [];
 
@@ -102,7 +102,7 @@ export class RuntimeEngine {
     return new ReadableStream({
       start: (stream) => {
         try {
-          chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(), {
+          chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(this.options), {
             ...this.options,
             signal: controller.signal,
             sourceFile: this.doc.sourceFile,

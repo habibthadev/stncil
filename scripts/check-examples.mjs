@@ -11,7 +11,7 @@ let failures = 0;
 for (const name of (await fs.readdir(examples)).filter((name) => name.endsWith(".stn")).sort()) {
   try {
     const source = await fs.readFile(new URL(name, examples), "utf8");
-    const engine = new Engine({ debug: false, fetchers });
+    const engine = new Engine({ debug: false, fetchers, csrfToken: "example-token" });
     const result = await engine.compileAndRender(source, context, { sourceFile: name });
     assert.equal(result.errors.length, 0, result.errors.map((error) => error.message).join("; "));
     assert.ok(!result.html.includes("{#"), "A template comment leaked into output");

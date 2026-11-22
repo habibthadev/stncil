@@ -1,5 +1,7 @@
 import { escapeHtml } from "../escape/html";
 import { escapeUrl } from "../escape/url";
+import { validateUrl } from "../escape/url";
+import { escapeJs } from "../escape/js";
 
 export type FilterFn = (value: unknown, ...args: unknown[]) => unknown;
 
@@ -131,6 +133,8 @@ const filters: Record<string, FilterFn> = Object.assign(Object.create(null), {
   },
 
   url_encode: (value) => escapeUrl(value),
+  url: (value) => validateUrl(value),
+  js: (value) => escapeJs(value),
 
   split: (value, delimiter = ",") => String(value ?? "").split(String(delimiter)),
   replace: (value, search, replacement = "") =>
@@ -149,6 +153,12 @@ export function registerFilter(name: string, fn: FilterFn): void {
 
 export function hasFilter(name: string): boolean {
   return Object.hasOwn(filters, name);
+}
+
+export function resolveFilter(name: string, custom?: Readonly<Record<string, FilterFn>>): FilterFn {
+  const filter = custom && Object.hasOwn(custom, name) ? custom[name] : getFilter(name);
+  if (typeof filter !== "function") throw new Error(`Unknown filter "${name}"`);
+  return filter;
 }
 
 export { filters };
