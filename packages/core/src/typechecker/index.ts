@@ -165,7 +165,9 @@ export class TypeChecker {
     const consequentScope = narrowType(node.condition, this.scope, true);
     const savedScope = this.scope;
     this.scope = consequentScope;
+    this.scope.pushFrame();
     this.processNodes(node.consequent);
+    this.scope.popFrame();
     this.scope = savedScope;
 
     for (const ei of node.elseIfs) {
@@ -173,7 +175,9 @@ export class TypeChecker {
       const eiScope = narrowType(ei.condition, this.scope, true);
       const savedScope2 = this.scope;
       this.scope = eiScope;
+      this.scope.pushFrame();
       this.processNodes(ei.body);
+      this.scope.popFrame();
       this.scope = savedScope2;
     }
 
@@ -181,7 +185,9 @@ export class TypeChecker {
       const altScope = narrowType(node.condition, this.scope, false);
       const savedScope3 = this.scope;
       this.scope = altScope;
+      this.scope.pushFrame();
       this.processNodes(node.alternate);
+      this.scope.popFrame();
       this.scope = savedScope3;
     }
   }
@@ -191,8 +197,15 @@ export class TypeChecker {
     if (sourceType && sourceType.kind !== "array") {
       this.addError("E004", "Cannot iterate over non-array", node.span);
     }
+    const parentLoop = this.scope.lookup("loop")?.type ?? { kind: "null" };
     this.scope.pushFrame();
-    this.scope.declare(node.itemName, { kind: "string" }, "each");
+    this.scope.declare("loop", { kind: "object", fields: {
+      index: { kind: "number" }, index0: { kind: "number" }, length: { kind: "number" },
+      first: { kind: "boolean" }, last: { kind: "boolean" },
+      revindex: { kind: "number" }, revindex0: { kind: "number" },
+      parent: parentLoop,
+    } }, "each");
+    this.scope.declare(node.itemName, sourceType?.kind === "array" ? sourceType.item : { kind: "string" }, "each");
     if (node.indexName) {
       this.scope.declare(node.indexName, { kind: "number" }, "each");
     }
@@ -221,7 +234,7 @@ export class TypeChecker {
   }
 
   private processLet(node: { name: string; value: ExprNode; span: Span }): void {
-    if (this.scope.has(node.name)) {
+    if (this.scope.hasLocal(node.name)) {
       this.addError("E007", `Duplicate variable declaration: ${node.name}`, node.span);
       return;
     }

@@ -36,6 +36,10 @@ export class Scope {
     return this.lookup(name) !== null;
   }
 
+  hasLocal(name: string): boolean {
+    return this.frames[this.frames.length - 1]!.has(name);
+  }
+
   clone(): Scope {
     const s = new Scope();
     s.frames.length = 0;

@@ -36,8 +36,15 @@ export function exec(
   ctx: RenderContext,
   state: ExecutorState,
 ): void {
-  for (const inst of instructions) {
-    execOne(inst, { ...ctx, ...state.variables }, state);
+  const parent = state.variables;
+  const scope: RenderContext = Object.assign(Object.create(null), ctx);
+  state.variables = Object.create(null);
+  try {
+    for (const inst of instructions) {
+      execOne(inst, scope, state);
+    }
+  } finally {
+    state.variables = parent;
   }
 }
 
@@ -133,7 +140,13 @@ function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState):
         exec(ei.empty, ctx, state);
       } else {
         for (let i = 0; i < arr.length; i++) {
-          const loopCtx: RenderContext = { ...ctx, [ei.as]: arr[i] };
+          const loopCtx: RenderContext = {
+            ...ctx,
+            loop: { index: i + 1, index0: i, first: i === 0, last: i === arr.length - 1,
+              length: arr.length, revindex: arr.length - i, revindex0: arr.length - i - 1,
+              parent: ctx.loop ?? null },
+            [ei.as]: arr[i],
+          };
           if (ei.indexAs) {
             loopCtx[ei.indexAs] = i;
           }
@@ -146,6 +159,7 @@ function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState):
     case "LET": {
       const li = inst as LetInstruction;
       state.variables[li.name] = evalExpr(li.value, ctx);
+      ctx[li.name] = state.variables[li.name];
       break;
     }
 
@@ -157,9 +171,11 @@ function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState):
 
     case "BOUNDARY": {
       const bi = inst as BoundaryInstruction;
+      const output = state.output;
       try {
         exec(bi.body, ctx, state);
       } catch (err) {
+        state.output = output;
         if (bi.errorBinding) {
           const errCtx: RenderContext = { ...ctx, [bi.errorBinding]: err };
           exec(bi.fallback, errCtx, state);
@@ -187,10 +203,13 @@ function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState):
         const curDepth = state.depth.get(rci.name) ?? 0;
         if (curDepth >= def.maxDepth) return;
         state.depth.set(rci.name, curDepth + 1);
-        const arg = evalExpr(rci.arg, ctx);
-        const callCtx: RenderContext = { ...ctx, [def.param]: arg };
-        exec(def.body, callCtx, state);
-        state.depth.set(rci.name, curDepth);
+        try {
+          const arg = evalExpr(rci.arg, ctx);
+          const callCtx: RenderContext = { ...ctx, [def.param]: arg };
+          exec(def.body, callCtx, state);
+        } finally {
+          state.depth.set(rci.name, curDepth);
+        }
       }
       break;
     }

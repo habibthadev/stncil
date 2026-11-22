@@ -122,6 +122,11 @@ usual. Raw HTML output should contain only content your application trusts.
 }
 ```
 
+Loops expose `loop.index` (one-based), `loop.index0`, `loop.first`, `loop.last`,
+`loop.length`, `loop.revindex`, and `loop.revindex0`. Nested loops can read the
+outer loop through `loop.parent`. Block-local `@let` bindings stay inside their
+block, and iteration bindings can shadow outer names.
+
 ### Local Variables
 
 ```stncil
