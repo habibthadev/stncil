@@ -33,6 +33,24 @@ describe("Engine", () => {
     expect(result.html).toContain("visible");
   });
 
+  it.each([
+    ["false && record.value", "hidden"],
+    ["true || record.value", "visible"],
+  ])("short-circuits @if (%s)", async (condition, expected) => {
+    const engine = new Engine({ debug: false });
+    const record = {
+      get value() {
+        throw new Error("guarded getter should not run");
+      },
+    };
+    const result = await engine.compileAndRender(
+      `@if (${condition}) { visible } @else { hidden }`,
+      { record },
+    );
+    expect(result.html.trim()).toBe(expected);
+    expect(result.errors).toHaveLength(0);
+  });
+
   it("handles @each blocks", async () => {
     const engine = new Engine({ debug: false });
     const result = await engine.compileAndRender("@each (item in items) { [{{ item }}] }", {

@@ -14,8 +14,12 @@ export function evalExpr(expr: IrExpr, ctx: RenderContext): unknown {
       return expr.value;
     case "null":
       return null;
-    case "binary":
-      return evalBinary(expr.op, evalExpr(expr.left, ctx), evalExpr(expr.right, ctx));
+    case "binary": {
+      const left = evalExpr(expr.left, ctx);
+      if (expr.op === "&&") return Boolean(left) && Boolean(evalExpr(expr.right, ctx));
+      if (expr.op === "||") return Boolean(left) || Boolean(evalExpr(expr.right, ctx));
+      return evalBinary(expr.op, left, evalExpr(expr.right, ctx));
+    }
     case "unary":
       return !evalExpr(expr.operand, ctx);
     case "ternary":
@@ -44,8 +48,6 @@ function evalBinary(op: string, left: unknown, right: unknown): unknown {
     case ">": return (left as number) > (right as number);
     case "<=": return (left as number) <= (right as number);
     case ">=": return (left as number) >= (right as number);
-    case "&&": return Boolean(left) && Boolean(right);
-    case "||": return Boolean(left) || Boolean(right);
     default: return undefined;
   }
 }
