@@ -1,4 +1,35 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
+import { readFileSync } from "node:fs";
+
+const assets = new Map([
+  [
+    "/tasks.js",
+    {
+      content: readFileSync(new URL("./tasks.js", import.meta.url)),
+      type: "application/javascript",
+    },
+  ],
+  [
+    "/icons.svg",
+    { content: readFileSync(new URL("./icons.svg", import.meta.url)), type: "image/svg+xml" },
+  ],
+  [
+    "/design.css",
+    { content: readFileSync(new URL("./design.css", import.meta.url)), type: "text/css" },
+  ],
+]);
+
+export function serveSharedAsset(request, response, pathname) {
+  const asset = assets.get(pathname);
+  if (!asset || !["GET", "HEAD"].includes(request.method)) return false;
+  response.writeHead(200, {
+    "Content-Type": asset.type,
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "public, max-age=3600",
+  });
+  response.end(request.method === "HEAD" ? undefined : asset.content);
+  return true;
+}
 
 export const csrfToken = randomBytes(32).toString("hex");
 
@@ -96,7 +127,8 @@ export function sendHtml(response, status, html) {
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Cache-Control": "no-store",
-    "Content-Security-Policy": "frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    "Content-Security-Policy":
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
   });
   response.end(html);
 }

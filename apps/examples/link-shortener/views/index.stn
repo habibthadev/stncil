@@ -1,75 +1,49 @@
 <div class="page-header">
-  <h1>Links</h1>
-  <span class="badge">{{ counts.total }}</span>
+  <div><h1>Links, without the length.</h1><p>Shorten a URL. Give it a name. Send it on.</p></div>
+  <dl class="summary" aria-label="Link totals">
+    <div><dt>Links</dt><dd>{{ counts.total | number_format }}</dd></div>
+    <div><dt>Clicks</dt><dd>{{ counts.clicks | number_format }}</dd></div>
+    <div><dt>Per link</dt><dd>{{ counts.avg | number_format }}</dd></div>
+  </dl>
 </div>
-
-@if (message) {
-  <div class="alert">
-    <iconify-icon icon="hugeicons:alert-circle"></iconify-icon>
-    {{ message }}
+@if (message) { <div class="alert" role="alert">{{ message }}</div> }
+<section class="composer" aria-labelledby="create-heading">
+  <h2 id="create-heading">Create a short link</h2>
+  <form method="POST" action="/links" class="link-form" data-validate="link" novalidate>
+    @csrf
+    <div class="field destination-field"><label for="url">Destination URL</label><input type="text" inputmode="url" id="url" name="url" maxlength="2048" placeholder="https://example.com/something-worth-sharing" autocomplete="url" required /></div>
+    <div class="field slug-field"><label for="slug">Short link <span class="optional">optional</span></label><div class="input-prefix"><span aria-hidden="true">/</span><input type="text" id="slug" name="slug" maxlength="64" placeholder="your-link" autocapitalize="none" spellcheck="false" /></div></div>
+    <button type="submit" class="btn btn-primary create-button">Create link <svg class="icon" aria-hidden="true"><use href="/icons.svg#arrow-right"></use></svg></button>
+    <details class="label-option"><summary>Add a label</summary><div class="field"><label for="title">Label <span class="optional">optional</span></label><input type="text" id="title" name="title" maxlength="240" placeholder="A name you’ll recognize later" /></div></details>
+  </form>
+</section>
+<section class="library" aria-labelledby="library-heading">
+  <div class="library-toolbar">
+    <h2 id="library-heading">Your links <span class="count">{{ counts.total }}</span></h2>
+    <form method="GET" action="/" class="search-form" role="search">
+      <div class="search-field"><label for="search" class="sr-only">Find a link</label><input type="search" id="search" name="q" value="{{ query }}" placeholder="Find a link…" maxlength="120" /><button type="submit" class="btn-icon" aria-label="Search links"><svg class="icon" aria-hidden="true"><use href="/icons.svg#search"></use></svg></button></div>
+      <label for="sort" class="sr-only">Sort links</label><select id="sort" name="sort"><option value="newest" @if (sort == "newest") { selected }>Newest first</option><option value="popular" @if (sort == "popular") { selected }>Most clicks</option><option value="title" @if (sort == "title") { selected }>Name A to Z</option></select>
+    </form>
   </div>
-}
-
-<div class="metrics">
-  <div class="metric-card">
-    <div class="metric-label"><iconify-icon icon="hugeicons:link-01"></iconify-icon> Total</div>
-    <div class="metric-value">{{ counts.total }}</div>
-  </div>
-  <div class="metric-card">
-    <div class="metric-label"><iconify-icon icon="hugeicons:mouse-left-click-01"></iconify-icon> Clicks</div>
-    <div class="metric-value">{{ counts.clicks }}</div>
-  </div>
-  <div class="metric-card">
-    <div class="metric-label"><iconify-icon icon="hugeicons:chart-line-data-01"></iconify-icon> Avg</div>
-    <div class="metric-value">{{ counts.avg }}</div>
-  </div>
-</div>
-
-<form method="POST" action="/links" class="link-form" data-validate="link" novalidate>
-  @csrf
-  <div class="field">
-    <label for="url">Destination URL</label>
-    <input type="text" id="url" name="url" maxlength="2048" placeholder="https://example.com/long-path..." />
-  </div>
-  <div class="field">
-    <label for="slug">Short link (optional)</label>
-    <input type="text" id="slug" name="slug" maxlength="64" placeholder="my-slug" />
-  </div>
-  <button type="submit" class="btn btn-primary"><iconify-icon icon="hugeicons:plus-sign"></iconify-icon> Shorten</button>
-</form>
-
-@if (links && links.length > 0) {
-  <div class="link-list">
-    @each (link in links) {
-      <div class="link-card">
-        <div class="link-icon"><iconify-icon icon="hugeicons:link-01"></iconify-icon></div>
-        <div class="link-info">
-          <div class="link-title">{{ link.title }}</div>
-          <div class="link-destination">{{ link.url }}</div>
-          <div class="link-meta">
-            <span class="link-slug">/{{ link.slug }}</span>
-            <span class="link-stats"><iconify-icon icon="hugeicons:mouse-left-click-01"></iconify-icon> {{ link.clicks }}</span>
-            <span class="link-stats"><iconify-icon icon="hugeicons:clock-01"></iconify-icon> {{ link.createdAt | date_format("MM/DD") }}</span>
+  @if (query) { <p class="search-summary">Results for “{{ query }}” <a href="/">Clear search</a></p> }
+  @if (links && links.length > 0) {
+    <div class="list-heading" aria-hidden="true"><span>Destination</span><span>Short link</span><span>Clicks</span><span>Created</span><span></span></div>
+    <ul class="link-list">
+      @each (link in links) {
+        <li class="link-row">
+          <div class="link-info"><p class="link-title">{{ link.title }}</p><a class="link-destination" href="{{ link.url | url }}" title="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.url }}</a></div>
+          <a class="link-slug" href='/{{ link.slug }}' target="_blank" rel="noopener noreferrer">/{{ link.slug }}</a>
+          <span class="link-clicks">{{ link.clicks | number_format }}<span class="mobile-only"> clicks</span></span>
+          <span class="link-date">{{ link.createdAt | date_format("MMM DD") }}</span>
+          <div class="link-actions">
+            <button type="button" class="btn-icon" data-copy="{{ link.slug }}" aria-label="Copy /{{ link.slug }}"><svg class="icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+            <a href='/links/{{ link.id }}/edit' class="btn-icon" aria-label="Edit {{ link.title }}"><svg class="icon" aria-hidden="true"><use href="/icons.svg#pencil"></use></svg></a>
+            <button type="button" class="btn-icon danger" data-delete="{{ link.id }}" data-label="{{ link.title }}" aria-label="Delete {{ link.title }}"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash-2"></use></svg></button>
           </div>
-        </div>
-        <div class="link-actions">
-          <button class="btn-icon" data-copy='{{ link.slug }}' aria-label="Copy short URL">
-            <iconify-icon icon="hugeicons:copy-01"></iconify-icon>
-          </button>
-          <a href='/links/{{ link.id }}/edit' class="btn-icon" aria-label="Edit">
-            <iconify-icon icon="hugeicons:pencil"></iconify-icon>
-          </a>
-          <button type="button" class="btn-icon danger" aria-label="Delete" data-delete='{{ link.id }}'>
-            <iconify-icon icon="hugeicons:delete-01"></iconify-icon>
-          </button>
-        </div>
-      </div>
-    }
-  </div>
-} @else {
-  <div class="empty-state">
-    <div class="empty-icon"><iconify-icon icon="hugeicons:link-01"></iconify-icon></div>
-    <p>No links yet</p>
-    <p class="sub">Create your first short link above</p>
-  </div>
-}
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="empty-state">@if (query) { <h3>No matching links</h3><p>Try a different name, URL, or short link.</p> } @else { <h3>No links yet</h3><p>Your first short link starts with a URL above.</p> }</div>
+  }
+</section>

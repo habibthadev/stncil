@@ -8,6 +8,7 @@ import {
   HttpError,
   parseForm,
   requestUrl,
+  serveSharedAsset,
   sendHtml,
   sendError,
 } from "../shared/http.mjs";
@@ -78,6 +79,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = requestUrl(req);
     const { pathname } = url;
+    if (serveSharedAsset(req, res, pathname)) return;
     const method = req.method;
     const body = method === "POST" ? await parseForm(req) : null;
 

@@ -145,6 +145,20 @@ try {
 
   const dashboard = await page(links);
   const linkToken = token(dashboard.html);
+  assert.ok(
+    dashboard.response.headers.get("content-security-policy").includes("script-src 'self'"),
+  );
+  for (const base of [basic, todo, links]) {
+    assert.equal((await page(`${base}/icons.svg`)).response.status, 200);
+    assert.equal((await page(`${base}/design.css`)).response.status, 200);
+  }
+  const search = await page(`${links}/?q=pnpm&sort=title`);
+  assert.equal((search.html.match(/class="link-row"/g) ?? []).length, 1);
+  assert.ok(search.html.includes("/pnpm-ws"));
+  const popular = await page(`${links}/?sort=popular`);
+  assert.equal(popular.html.match(/data-copy="([^"]+)"/)[1], "node-install");
+  assert.ok((await page(`${links}/?q=no-matching-link`)).html.includes("No matching links"));
+  assert.equal((await page(`${links}/?q=${"x".repeat(121)}`)).response.status, 400);
   assert.equal(
     (await post(links, "/links", { _csrf: linkToken, url: "javascript:alert(1)" })).status,
     400,

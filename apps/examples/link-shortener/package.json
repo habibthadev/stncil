@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:css": "sass styles/scss/main.scss:public/main.css --style compressed --no-source-map",
-    "prestart": "sass styles/scss/main.scss:public/main.css --style compressed --no-source-map",
+    "build:css": "sass ../shared/design.scss:../shared/design.css styles/scss/main.scss:public/main.css --style compressed --no-source-map",
+    "prestart": "pnpm run build:css",
     "start": "node index.js"
   },
   "dependencies": {

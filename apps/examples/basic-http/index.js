@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Engine } from "stncil";
-import { HttpError, requestUrl, sendHtml, sendError } from "../shared/http.mjs";
+import { HttpError, requestUrl, serveSharedAsset, sendHtml, sendError } from "../shared/http.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -66,6 +66,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = requestUrl(req);
     const pathname = url.pathname;
+    if (serveSharedAsset(req, res, pathname)) return;
 
     if (pathname === "/" || pathname === "") {
       const html = await renderPage("views/index.stn", {

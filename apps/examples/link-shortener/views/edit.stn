@@ -1,37 +1,12 @@
+<a href="/" class="back-link"><svg class="icon" aria-hidden="true"><use href="/icons.svg#arrow-left"></use></svg> Back to links</a>
 @if (link) {
-  <h1 style="margin-bottom: 1.5rem;">Edit Link</h1>
-
-  @if (message) {
-    <div class="alert">
-      <iconify-icon icon="hugeicons:alert-circle"></iconify-icon>
-      {{ message }}
-    </div>
-  }
-
+  <div class="page-header"><div><h1>Edit link</h1><p>Update the destination. Keep the same short URL.</p></div></div>
+  @if (message) { <div class="alert" role="alert">{{ message }}</div> }
   <form method="POST" action='/links/{{ link.id }}/update' class="edit-form" data-validate="edit" novalidate>
     @csrf
-    <div class="field">
-      <label for="url">Destination URL</label>
-      <input type="text" id="url" name="url" value='{{ link.url }}' maxlength="2048" />
-    </div>
-    <div class="field">
-      <label for="slug">Short link</label>
-      <input type="text" id="slug" value='{{ link.slug }}' readonly />
-      <span class="hint">Short links cannot be changed once created.</span>
-    </div>
-    <div class="field">
-      <label for="title">Label</label>
-      <input type="text" id="title" name="title" value='{{ link.title }}' maxlength="240" />
-    </div>
-    <div class="actions">
-      <a href="/" class="btn btn-ghost">Cancel</a>
-      <button type="submit" class="btn btn-primary">Save</button>
-    </div>
+    <div class="field"><label for="url">Destination URL</label><input type="text" inputmode="url" id="url" name="url" value="{{ link.url }}" maxlength="2048" required /></div>
+    <div class="field"><label for="slug">Short link</label><input type="text" id="slug" value="/{{ link.slug }}" readonly aria-describedby="slug-hint" /><p id="slug-hint" class="hint">This stays the same when you update the destination.</p></div>
+    <div class="field"><label for="title">Label <span class="optional">optional</span></label><input type="text" id="title" name="title" value="{{ link.title }}" maxlength="240" /></div>
+    <div class="actions"><button type="submit" class="btn btn-primary">Save changes</button><a href="/" class="btn btn-ghost">Cancel</a></div>
   </form>
-} @else {
-  <div class="empty-state">
-    <div class="empty-icon"><iconify-icon icon="hugeicons:alert-circle"></iconify-icon></div>
-    <p>Link not found</p>
-    <p class="sub"><a href="/">Back to links</a></p>
-  </div>
-}
+} @else { <div class="empty-state"><h1>Link not found</h1><p>It may have been deleted. Choose another from your links.</p></div> }

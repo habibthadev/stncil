@@ -10,6 +10,7 @@ import {
   normalizeDestination,
   parseForm,
   requestUrl,
+  serveSharedAsset,
   sendHtml,
   sendError,
 } from "../shared/http.mjs";
@@ -127,17 +128,35 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = requestUrl(req);
     const { pathname } = url;
+    if (serveSharedAsset(req, res, pathname)) return;
     const method = req.method;
     if (serveStatic(req, res, pathname)) return;
     const body = method === "POST" ? await parseForm(req) : null;
 
     // Dashboard
     if (method === "GET" && pathname === "/") {
+      const query = (url.searchParams.get("q") ?? "").trim();
+      if (query.length > 120) throw new HttpError(400, "Search must be at most 120 characters");
+      const requestedSort = url.searchParams.get("sort");
+      const sort = ["popular", "title"].includes(requestedSort) ? requestedSort : "newest";
+      const needle = query.toLowerCase();
+      const visible = links.filter((link) =>
+        [link.title, link.url, link.slug].some((value) => value.toLowerCase().includes(needle)),
+      );
+      visible.sort((a, b) =>
+        sort === "popular"
+          ? b.clicks - a.clicks || Number(b.id) - Number(a.id)
+          : sort === "title"
+            ? a.title.localeCompare(b.title) || Number(b.id) - Number(a.id)
+            : Number(b.id) - Number(a.id),
+      );
       const totalClicks = links.reduce((s, l) => s + l.clicks, 0);
       const html = await renderPage("index.stn", {
         title: "Links",
-        description: "URL shortener dashboard.",
-        links,
+        description: "Shorten a URL, share it, and keep your links in order.",
+        links: visible,
+        query,
+        sort,
         counts: {
           total: links.length,
           clicks: totalClicks,

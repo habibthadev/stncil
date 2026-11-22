@@ -1,67 +1,23 @@
-<div class="page-header">
-  <h1>Tasks</h1>
-  <span class="badge">{{ counts.all }}</span>
-</div>
-
-@if (message) {
-  <div class="alert">{{ message }}</div>
-}
-
+<div class="page-header"><div><h1>A little less on your mind.</h1><p>A place for the things you want to get done.</p></div></div>
+@if (message) { <div class="alert" role="alert">{{ message }}</div> }
 <form method="POST" action="/todos" class="todo-form">
   @csrf
-  <input type="text" name="title" aria-label="Task title" maxlength="240" placeholder="Write a task&hellip;" required />
-  <button type="submit" class="btn btn-sm">Add task</button>
+  <div class="field"><label for="task-title">New task</label><input type="text" id="task-title" name="title" maxlength="240" placeholder="What needs doing?" required /></div>
+  <button type="submit" class="btn btn-primary">Add task <svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg></button>
 </form>
-
-<div class="todo-filters">
-  <a href="/" class='filter @if (currentFilter == "all") { active }'>All &middot; {{ counts.all }}</a>
-  <a href="/?filter=active" class='filter @if (currentFilter == "active") { active }'>Active &middot; {{ counts.active }}</a>
-  <a href="/?filter=completed" class='filter @if (currentFilter == "completed") { active }'>Done &middot; {{ counts.completed }}</a>
-</div>
-
+<nav class="todo-filters" aria-label="Filter tasks">
+  <a href="/" class='filter @if (currentFilter == "all") { active }' @if (currentFilter == "all") { aria-current="page" }>All <span>{{ counts.all }}</span></a>
+  <a href="/?filter=active" class='filter @if (currentFilter == "active") { active }' @if (currentFilter == "active") { aria-current="page" }>Active <span>{{ counts.active }}</span></a>
+  <a href="/?filter=completed" class='filter @if (currentFilter == "completed") { active }' @if (currentFilter == "completed") { aria-current="page" }>Done <span>{{ counts.completed }}</span></a>
+</nav>
 @if (todos && todos.length > 0) {
-  <div class="todo-list">
+  <ul class="todo-list">
     @each (todo in todos) {
-      <div class='todo-item'>
-        <form method="POST" action='/todos/{{ todo.id }}/toggle' style="display: contents;">
-          @csrf
-          <button type="submit" class='todo-check @if (todo.completed) { completed }' aria-label="Toggle completion for {{ todo.title }}" aria-pressed="{{ todo.completed }}">
-            @if (todo.completed) {
-              <i data-lucide='check' style="width: 16px; height: 16px; stroke-width: 3;"></i>
-            } @else {
-              <i data-lucide='minus' style="width: 16px; height: 16px; stroke-width: 3;"></i>
-            }
-          </button>
-        </form>
-        <div class="todo-body">
-          <span class='todo-title @if (todo.completed) { completed }'>{{ todo.title }}</span>
-          <span class="todo-meta">{{ todo.createdAt | date_format("MM/DD") }}</span>
-        </div>
-        <div class="todo-actions">
-          <a href='/todos/{{ todo.id }}/edit' class="edit-btn" aria-label="Edit">
-            <i data-lucide='pencil' style="width: 15px; height: 15px; stroke-width: 2;"></i>
-          </a>
-          <form method="POST" action='/todos/{{ todo.id }}/delete' style="display: contents;">
-            @csrf
-            <button type="submit" class="delete-btn" aria-label="Delete" onclick="return confirm('Delete this task?')">
-              <i data-lucide='trash-2' style="width: 15px; height: 15px; stroke-width: 2;"></i>
-            </button>
-          </form>
-        </div>
-      </div>
+      <li class="todo-item">
+        <form method="POST" action='/todos/{{ todo.id }}/toggle'>@csrf<button type="submit" class='todo-check @if (todo.completed) { completed }' aria-label="Toggle completion for {{ todo.title }}" aria-pressed="{{ todo.completed }}"><svg class="icon" aria-hidden="true"><use href="/icons.svg#{{ todo.completed ? 'check' : 'minus' }}"></use></svg></button></form>
+        <div class="todo-body"><span class='todo-title @if (todo.completed) { completed }'>{{ todo.title }}</span><span class="todo-meta">{{ todo.createdAt | date_format("MMM DD") }}</span></div>
+        <div class="todo-actions"><a href='/todos/{{ todo.id }}/edit' class="btn-icon" aria-label="Edit {{ todo.title }}"><svg class="icon" aria-hidden="true"><use href="/icons.svg#pencil"></use></svg></a><form method="POST" action='/todos/{{ todo.id }}/delete' data-delete-task="{{ todo.title }}">@csrf<button type="submit" class="btn-icon danger" aria-label="Delete {{ todo.title }}"><svg class="icon" aria-hidden="true"><use href="/icons.svg#trash-2"></use></svg></button></form></div>
+      </li>
     }
-  </div>
-} @else {
-  <div class="empty-state">
-    @if (currentFilter == "active") {
-      <p>No active tasks.</p>
-      <p class="sub"><a href="/?filter=completed" style="color: var(--accent);">View completed tasks</a></p>
-    } @else if (currentFilter == "completed") {
-      <p>No completed tasks yet.</p>
-      <p class="sub">Complete a task to see it here.</p>
-    } @else {
-      <p>No tasks yet.</p>
-      <p class="sub">Add one above to get started.</p>
-    }
-  </div>
-}
+  </ul>
+} @else { <div class="empty-state">@if (currentFilter == "active") { <h2>Nothing left on the list</h2><p><a href="/?filter=completed">View completed tasks</a></p> } @else if (currentFilter == "completed") { <h2>No completed tasks yet</h2><p>Check off a task to see it here.</p> } @else { <h2>Your list starts here</h2><p>Add a task above.</p> }</div> }

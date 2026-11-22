@@ -1,0 +1,182 @@
+@use "variables" as *;
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn-primary {
+  background: var(--ink);
+  color: var(--inverse);
+}
+.btn-primary:hover {
+  opacity: 0.88;
+}
+.btn-ghost {
+  background: var(--surface);
+  border-color: var(--line-strong);
+}
+.btn-ghost:hover {
+  background: var(--surface-hover);
+}
+.btn-danger {
+  background: var(--danger);
+  color: var(--surface);
+}
+.btn-danger:hover {
+  opacity: 0.88;
+}
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+.btn-icon:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+.btn-icon.danger:hover {
+  background: var(--danger-surface);
+  color: var(--danger);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.optional {
+  margin-left: 0.375rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+input,
+textarea,
+select {
+  min-height: 48px;
+  min-width: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0.625rem 0.875rem;
+  font: inherit;
+}
+input,
+textarea {
+  width: 100%;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--ink);
+}
+input[readonly] {
+  color: var(--muted);
+  background: var(--surface-muted);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.hint {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.alert {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: var(--danger-surface);
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.dialog {
+  width: min(440px, calc(100% - 2.5rem));
+  max-height: calc(100dvh - 2.5rem);
+  margin: auto;
+  padding: 2rem;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.12);
+}
+.dialog::backdrop {
+  background: var(--overlay);
+}
+.dialog h2 {
+  margin-bottom: 0.75rem;
+}
+.dialog p {
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+.dialog-link {
+  padding: 0.875rem 0;
+  overflow-wrap: anywhere;
+  color: var(--ink) !important;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}

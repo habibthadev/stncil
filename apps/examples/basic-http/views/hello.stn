@@ -1,31 +1,4 @@
-<h1>Hello, <span class="greeting-highlight">{{ name | upper }}</span>!</h1>
-<p class="tagline">{{ greeting }}</p>
-
-<div class="section">
-  <h2 style="margin-bottom: 1rem;">About</h2>
-  <div class="info-box">
-    <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
-      <div style="width: 40px; height: 40px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide='info' style="width: 18px; height: 18px; stroke-width: 2;"></i></div>
-      <div>
-        <h3 style="margin: 0 0 0.25rem;">This page</h3>
-        <p style="margin: 0; font-size: 0.875rem; color: var(--muted);">Rendered server-side with Stncil</p>
-      </div>
-    </div>
-    <p style="margin-top: 1rem; color: #5a5450;">The <code>name</code> parameter <strong>{{ name }}</strong> was passed from the URL query string and rendered through the Stncil template engine.</p>
-  </div>
-</div>
-
-<div class="section">
-  <h2 style="margin-bottom: 0.75rem;">Request</h2>
-  <table>
-    <tr><th style="width: 30%;">Field</th><th>Value</th></tr>
-    <tr><td style="color: var(--muted);">Method</td><td><code>{{ method }}</code></td></tr>
-    <tr><td style="color: var(--muted);">URL</td><td><code>{{ url }}</code></td></tr>
-    <tr><td style="color: var(--muted);">Time</td><td><code>{{ now | date_format("HH:mm") }}</code></td></tr>
-  </table>
-</div>
-
-<div style="display: flex; gap: 0.5rem; margin-top: 2rem;">
-  <a href="/" class="btn btn-ghost"><i data-lucide='arrow-left' style="width: 14px; height: 14px; stroke-width: 2;"></i> Home</a>
-  <a href="/hello?name=Stncil" class="btn">Try with &ldquo;Stncil&rdquo;</a>
-</div>
+<div class="page-header"><div><h1>Hello, {{ name }}.</h1><p>{{ greeting }}</p></div></div>
+<section class="section" aria-labelledby="about-heading"><h2 id="about-heading">Your greeting</h2><div class="info-box"><p>The name <strong>{{ name }}</strong> came from the URL. stncil escapes it before rendering this page.</p></div></section>
+<section class="section" aria-labelledby="request-heading"><h2 id="request-heading">The request</h2><table><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody><tr><th scope="row">Method</th><td><code>{{ method }}</code></td></tr><tr><th scope="row">URL</th><td><code>{{ url }}</code></td></tr><tr><th scope="row">Time</th><td><code>{{ now | date_format("HH:mm") }}</code></td></tr></tbody></table></section>
+<div class="actions"><a href="/" class="btn btn-ghost">Back to home</a><a href="/hello?name=stncil" class="btn btn-primary">Greet stncil</a></div>
