@@ -8,7 +8,7 @@ import type {
   RecursiveDefInstruction, RecursiveCallInstruction,
   StyleBlockInstruction,
 } from "@stncil/core";
-import type { RenderContext } from "./context";
+import { resolvePath, type RenderContext } from "./context";
 import { evalExpr } from "./eval";
 import { escapeHtml } from "../escape/html";
 import { escapeUrl } from "../escape/url";
@@ -25,7 +25,7 @@ export interface ExecutorState {
 export function createExecutorState(): ExecutorState {
   return {
     output: "",
-    variables: {},
+    variables: Object.create(null),
     recursiveDefs: new Map(),
     depth: new Map(),
   };
@@ -48,35 +48,35 @@ function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState):
       break;
 
     case "WRITE_ESCAPED": {
-      const val = resolveExpr((inst as WriteEscapedInstruction).path, ctx);
+      const val = resolvePath((inst as WriteEscapedInstruction).path, ctx);
       state.output += escapeHtml(val);
       break;
     }
 
     case "WRITE_URL_ESCAPED": {
-      const val = resolveExpr((inst as WriteUrlEscapedInstruction).path, ctx);
+      const val = resolvePath((inst as WriteUrlEscapedInstruction).path, ctx);
       state.output += escapeUrl(val);
       break;
     }
 
     case "WRITE_CSS_ESCAPED": {
-      const val = resolveExpr((inst as WriteCssEscapedInstruction).path, ctx);
+      const val = resolvePath((inst as WriteCssEscapedInstruction).path, ctx);
       state.output += escapeCss(val);
       break;
     }
 
     case "WRITE_TRUSTED": {
-      const val = resolveExpr((inst as WriteTrustedInstruction).path, ctx);
+      const val = resolvePath((inst as WriteTrustedInstruction).path, ctx);
       state.output += val == null ? "" : String(val);
       break;
     }
 
     case "WRITE_FILTER": {
       const fi = inst as WriteFilterInstruction;
-      let val: unknown = resolveExpr(fi.path, ctx);
+      let val: unknown = resolvePath(fi.path, ctx);
       for (const f of fi.filters) {
         const args = f.args.map((a: IrExpr) => evalExpr(a, ctx));
-        const fn = getFilterFn(f.name);
+        const fn = getFilter(f.name);
         if (fn) val = fn(val, ...args);
       }
       state.output += val == null ? "" : escapeHtml(val);
@@ -85,7 +85,7 @@ function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState):
 
     case "WRITE_JSON": {
       const ji = inst as WriteJsonInstruction;
-      const val = resolveExpr(ji.path, ctx);
+      const val = resolvePath(ji.path, ctx);
       state.output += JSON.stringify(val);
       break;
     }
@@ -207,22 +207,5 @@ function execOne(inst: IrInstruction, ctx: RenderContext, state: ExecutorState):
     case "RENDER_PARTIAL":
     case "SLOT_TARGET":
       break;
-  }
-}
-
-function resolveExpr(path: readonly string[], ctx: RenderContext): unknown {
-  let current: unknown = ctx;
-  for (const seg of path) {
-    if (current == null || typeof current !== "object") return undefined;
-    current = (current as Record<string, unknown>)[seg];
-  }
-  return current;
-}
-
-function getFilterFn(name: string): ((value: unknown, ...args: unknown[]) => unknown) | undefined {
-  try {
-    return getFilter(name);
-  } catch {
-    return undefined;
   }
 }

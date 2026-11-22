@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getFilter, registerFilter, hasFilter } from "../src/filters/index";
+import { filters, getFilter, registerFilter, hasFilter } from "../src/filters/index";
 
 describe("filters", () => {
   describe("string transforms", () => {
@@ -124,6 +124,30 @@ describe("filters", () => {
   });
 
   describe("registration", () => {
+    it.each(["constructor", "__proto__", "toString", "hasOwnProperty"])(
+      "does not expose inherited %s as a filter",
+      (name) => {
+        expect(hasFilter(name)).toBe(false);
+        expect(getFilter(name)).toBeUndefined();
+      },
+    );
+
+    it("registers __proto__ as an ordinary filter name", () => {
+      const prototype = Object.getPrototypeOf(filters);
+      const fn = (value: unknown) => String(value).toUpperCase();
+      try {
+        registerFilter("__proto__", fn);
+        expect(Object.hasOwn(filters, "__proto__")).toBe(true);
+        expect(Object.getPrototypeOf(filters)).toBe(prototype);
+        expect(getFilter("__proto__")).toBe(fn);
+        expect(hasFilter("__proto__")).toBe(true);
+        expect(getFilter("__proto__")!("stncil")).toBe("STNCIL");
+      } finally {
+        delete filters["__proto__"];
+        Object.setPrototypeOf(filters, prototype);
+      }
+    });
+
     it("registers custom filter", () => {
       registerFilter("double", (v) => Number(v) * 2);
       expect(getFilter("double")!(5)).toBe(10);

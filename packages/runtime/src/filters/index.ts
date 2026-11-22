@@ -2,7 +2,7 @@ import { escapeHtml } from "../escape/html";
 
 export type FilterFn = (value: unknown, ...args: unknown[]) => unknown;
 
-const filters: Record<string, FilterFn> = {
+const filters: Record<string, FilterFn> = Object.assign(Object.create(null), {
   upper: (value) => String(value ?? "").toUpperCase(),
   lower: (value) => String(value ?? "").toLowerCase(),
   capitalize: (value) => {
@@ -88,10 +88,10 @@ const filters: Record<string, FilterFn> = {
 
   split: (value, delimiter = ",") => String(value ?? "").split(String(delimiter)),
   replace: (value, search, replacement = "") => String(value ?? "").split(String(search)).join(String(replacement)),
-};
+} satisfies Record<string, FilterFn>);
 
 export function getFilter(name: string): FilterFn | undefined {
-  return filters[name];
+  return Object.hasOwn(filters, name) ? filters[name] : undefined;
 }
 
 export function registerFilter(name: string, fn: FilterFn): void {
@@ -99,7 +99,7 @@ export function registerFilter(name: string, fn: FilterFn): void {
 }
 
 export function hasFilter(name: string): boolean {
-  return name in filters;
+  return Object.hasOwn(filters, name);
 }
 
 export { filters };

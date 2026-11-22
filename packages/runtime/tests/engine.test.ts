@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { RuntimeEngine } from "../src/engine/index";
-import type { IrDocument } from "@stncil/core/codegen/ir";
+import type { IrDocument, IrInstruction } from "@stncil/core";
 
 function makeDoc(instructions: IrDocument["instructions"]): IrDocument {
   return {
@@ -249,6 +249,36 @@ describe("RuntimeEngine", () => {
     );
     const result = engine.render({ user: { name: "Alice" } });
     expect(result.html).toBe("Alice");
+  });
+
+  it.each<IrInstruction>([
+    { op: "WRITE_ESCAPED", path: ["record", "secret"], nodeId: "n0" },
+    { op: "WRITE_TRUSTED", path: ["record", "secret"], nodeId: "n0" },
+    { op: "WRITE_URL_ESCAPED", path: ["record", "secret"], nodeId: "n0" },
+    { op: "WRITE_CSS_ESCAPED", path: ["record", "secret"], nodeId: "n0" },
+    { op: "WRITE_FILTER", path: ["record", "secret"], filters: [], nodeId: "n0" },
+  ])("does not render inherited fields through $op", (instruction) => {
+    const engine = new RuntimeEngine(makeDoc([instruction]));
+    const record = Object.create({ secret: "inherited" });
+    const result = engine.render({ record });
+    expect(result.html).toBe("");
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("does not take conditional branches for inherited fields", () => {
+    const engine = new RuntimeEngine(
+      makeDoc([
+        {
+          op: "IF",
+          condition: { kind: "path", segments: ["record", "secret"] },
+          consequent: [{ op: "WRITE_LITERAL", value: "leaked", nodeId: "n1" }],
+          elseIfs: [],
+          alternate: [{ op: "WRITE_LITERAL", value: "safe", nodeId: "n2" }],
+          nodeId: "n0",
+        },
+      ]),
+    );
+    expect(engine.render({ record: Object.create({ secret: true }) }).html).toBe("safe");
   });
 
   it("returns errors for missing paths in WRITE_ESCAPED", () => {

@@ -94,6 +94,10 @@ const final = await engine.compileAndRender(layout, {
 {{- user.name -}}            {# Trim whitespace both sides #}
 ```
 
+Template paths read only own object properties. Inherited fields and prototype
+methods are unavailable; plain objects, JSON records, and array indices work as
+usual. Raw HTML output should contain only content your application trusts.
+
 ### Conditional Blocks
 
 ```stncil

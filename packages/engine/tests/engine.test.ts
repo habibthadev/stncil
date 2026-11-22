@@ -49,6 +49,16 @@ describe("Engine", () => {
     expect(result.html).toBe("hi");
   });
 
+  it.each(["__proto__", "constructor", "toString"])(
+    "allows %s as an explicit local binding",
+    async (name) => {
+      const engine = new Engine({ debug: false });
+      const result = await engine.compileAndRender(`@let ${name} = "own" {{ ${name} }}`);
+      expect(result.html).toBe("own");
+      expect(result.errors).toHaveLength(0);
+    },
+  );
+
   it("uses cache by default", async () => {
     const engine = new Engine({ debug: false });
     const compile = vi.spyOn(engine, "compile");
