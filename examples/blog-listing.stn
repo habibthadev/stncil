@@ -1,34 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Sora:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../apps/examples/shared/design.css" />
+
   <title>{{ page_title }} — {{ site_name }}</title>
   <meta name="description" content='{{ meta_description }}' />
 </head>
-<body>
-  <header>
+<body class="layout-narrow">
+  <a href="#main" class="skip-link">Skip to content</a>
+  <header class="site-header"><nav class="nav" aria-label="Example navigation"><a class="brand" href="hello.html"><span class="brand-sigil" aria-hidden="true">&#64;</span> stncil</a><span class="nav-divider" aria-hidden="true">/</span><span class="nav-current">Examples</span></nav></header>
+  <main id="main" class="container" tabindex="-1">
+
+  <div class="demo-heading">
     <h1>{{ page_title }}</h1>
     <p class="subtitle">{{ subtitle }}</p>
-  </header>
+  </div>
 
-  <main>
+  <section class="demo-section">
     @if (posts && posts.length > 0) {
       <div class="post-list">
       @each (post in posts) {
         <article class="post">
-          <h2><a href='/posts/{{ post.slug }}'>{{ post.title }}</a></h2>
+          <h2><a href='/posts/{{ post.slug | url_encode }}'>{{ post.title }}</a></h2>
           <p class="meta">
             By {{ post.author | default("Anonymous") }}
             on {{ post.date | date_format("MMM DD, YYYY") }}
             @if (post.tags && post.tags.length > 0) {
               in
               @each (tag in post.tags) {
-                <a href='/tags/{{ tag | lower }}' class="tag">{{ tag }}</a>
+                <a href='/tags/{{ tag | lower | url_encode }}' class="tag">{{ tag }}</a>
                 @if (true) {, }
               }
             }
           </p>
           <p class="excerpt">{{ post.excerpt | truncate(200) }}</p>
-          <a href='/posts/{{ post.slug }}' class="read-more">Read more &rarr;</a>
+          <a href='/posts/{{ post.slug | url_encode }}' class="read-more">Read more &rarr;</a>
         </article>
       }
       </div>
@@ -50,10 +61,10 @@
         <p>Check back soon for new content.</p>
       </div>
     }
-  </main>
+  </section>
 
-  <footer>
-    <p>&copy; {{ year }} {{ site_name }}. All rights reserved.</p>
-  </footer>
+
+  </main>
+  <footer class="footer"><span>Made with stncil</span><span>Rendered from local sample data.</span></footer>
 </body>
 </html>

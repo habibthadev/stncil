@@ -72,7 +72,7 @@ const server = http.createServer(async (req, res) => {
       const html = await renderPage("views/index.stn", {
         title: "Home",
         description: "A demo site built with Stncil.",
-        tagline: "A typed, streaming template engine for TypeScript.",
+        tagline: "Templates with a language of their own.",
         is_home: true,
         posts,
         started_at: startedAt,

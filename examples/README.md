@@ -21,3 +21,22 @@ pnpm --filter example-cli-render exec node cli.js greeting.stn data.json
 The HTTP examples use ports 3000, 3001, and 3002 respectively. The email and CLI
 examples write rendered HTML to stdout. The HTTP examples keep their data in
 memory; restarting them restores the demonstration data.
+
+The examples share the design in `apps/examples/shared/design.scss`. Build its CSS
+with `pnpm --filter example-link-shortener build:css`. Fonts load from the CDN;
+control icons are local. The full rules are in `apps/examples/DESIGN.md`.
+
+To render, check, and preview all examples:
+
+```sh
+pnpm examples:check
+pnpm examples:output
+pnpm examples:http
+pnpm examples:preview
+```
+
+The preview server opens the generated pages at `http://localhost:3010/hello.html`.
+The other preview names include `dashboard.html`, `user-card.html`,
+`cli-greeting.html`, `email-welcome.html`, and `email-notification.html`.
+Standalone forms and post/pagination links demonstrate markup for an owning app;
+the HTTP examples provide live handlers for their own workflows.

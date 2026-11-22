@@ -1,25 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Sora:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../apps/examples/shared/design.css" />
+
   <title>{{ page_title }}</title>
 </head>
-<body>
+<body class="layout-narrow">
+  <a href="#main" class="skip-link">Skip to content</a>
+  <header class="site-header"><nav class="nav" aria-label="Example navigation"><a class="brand" href="hello.html"><span class="brand-sigil" aria-hidden="true">&#64;</span> stncil</a><span class="nav-divider" aria-hidden="true">/</span><span class="nav-current">Examples</span></nav></header>
+  <main id="main" class="container" tabindex="-1">
+
   <h1>{{ page_title }}</h1>
 
-  {# ================================================================== #}
-  {# Variables & Interpolation                                           #}
-  {# ================================================================== #}
-  <section>
+
+
+
+  <section class="demo-section">
     <h2>Variables</h2>
     <p>Simple: {{ name }}</p>
     <p>Nested path: {{ user.profile.display_name }}</p>
     <p>With default: {{ bio | default("No bio provided.") }}</p>
   </section>
 
-  {# ================================================================== #}
-  {# Filter chains                                                      #}
-  {# ================================================================== #}
-  <section>
+
+
+
+  <section class="demo-section">
     <h2>Filters</h2>
     <p>Uppercase: {{ name | upper }}</p>
     <p>Lowercase: {{ name | lower }}</p>
@@ -29,10 +40,10 @@
     <p>Date: {{ created_at | date_format("YYYY-MM-DD") }}</p>
   </section>
 
-  {# ================================================================== #}
-  {# Conditionals                                                       #}
-  {# ================================================================== #}
-  <section>
+
+
+
+  <section class="demo-section">
     <h2>Conditionals</h2>
 
     @if (user.role == "admin") {
@@ -52,10 +63,10 @@
     }
   </section>
 
-  {# ================================================================== #}
-  {# @let assignments                                                   #}
-  {# ================================================================== #}
-  <section>
+
+
+
+  <section class="demo-section">
     <h2>Let bindings</h2>
 
     @let full_name = user.first_name ~ " " ~ user.last_name
@@ -71,10 +82,10 @@
     }
   </section>
 
-  {# ================================================================== #}
-  {# @each loops                                                        #}
-  {# ================================================================== #}
-  <section>
+
+
+
+  <section class="demo-section">
     <h2>Loops</h2>
 
     <h3>Basic each loop</h3>
@@ -94,10 +105,10 @@
     </ol>
   </section>
 
-  {# ================================================================== #}
-  {# @async blocks                                                      #}
-  {# ================================================================== #}
-  <section>
+
+
+
+  <section class="demo-section">
     <h2>Async data</h2>
     @async (comments from fetchComments(postId)) {
       <div class="comments">
@@ -115,10 +126,10 @@
     }
   </section>
 
-  {# ================================================================== #}
-  {# Expressions                                                        #}
-  {# ================================================================== #}
-  <section>
+
+
+
+  <section class="demo-section">
     <h2>Expressions</h2>
 
     @let result_a = 10 + 5 * 2
@@ -135,15 +146,17 @@
     <p>Status: {{ user.is_active ? "active" : "inactive" }}</p>
   </section>
 
-  {# ================================================================== #}
-  {# Escape contexts                                                    #}
-  {# ================================================================== #}
-  <section>
+
+
+
+  <section class="demo-section">
     <h2>Escaping</h2>
     <p>{{ unsafe_html }}</p>
     <a href='/search?q={{ query | url_encode }}'>Search</a>
-    <div style='background-color: {{ color_value }}'>Color</div>
+    <p>CSS value: <code>{{ color_value }}</code></p>
     <div>{{ unsafe_html }}</div>
   </section>
+  </main>
+  <footer class="footer"><span>Made with stncil</span><span>Rendered from local sample data.</span></footer>
 </body>
 </html>

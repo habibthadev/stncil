@@ -1,42 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Sora:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../apps/examples/shared/design.css" />
+
   <title>{{ title }}</title>
-  @style {
-    body { font-family: monospace; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-    h1 { color: #333; }
-    form { background: #f9f9f9; padding: 1.5rem; border-radius: 8px; }
-    label { display: block; margin: 1rem 0 .25rem; font-weight: 600; }
-    input, textarea, select { width: 100%; padding: .5rem; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
-    input:focus, textarea:focus { outline: 2px solid #4f46e5; outline-offset: -1px; }
-    .error { color: #dc2626; font-size: .875rem; margin-top: .25rem; }
-    .help-text { color: #666; font-size: .75rem; margin-top: .25rem; }
-    button { background: #4f46e5; color: #fff; border: none; padding: .75rem 1.5rem; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
-    button:hover { background: #4338ca; }
-    .field-group { margin-bottom: 1rem; }
-    .success { background: #dcfce7; color: #166534; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
-    .error-summary { background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
-  }
 </head>
-<body>
+<body class="layout-narrow">
+  <a href="#main" class="skip-link">Skip to content</a>
+  <header class="site-header"><nav class="nav" aria-label="Example navigation"><a class="brand" href="hello.html"><span class="brand-sigil" aria-hidden="true">&#64;</span> stncil</a><span class="nav-divider" aria-hidden="true">/</span><span class="nav-current">Examples</span></nav></header>
+  <main id="main" class="container" tabindex="-1">
+
   <h1>{{ title }}</h1>
 
   @if (flash_success) {
     <div class="success">{{ flash_success }}</div>
   }
 
-  @if (errors && errors.length > 0) {
+  @if (error_list && error_list.length > 0) {
     <div class="error-summary">
       <strong>Please fix the following errors:</strong>
       <ul>
-      @each (err in errors) {
+      @each (err in error_list) {
         <li>{{ err.message }}</li>
       }
       </ul>
     </div>
   }
 
-  <form method="POST" action='{{ action | default("/submit") }}'>
+  <form method="POST" action='{{ action | default("/submit") | url }}'>
     @csrf
 
     <div class="field-group">
@@ -74,6 +70,7 @@
         id="message"
         name="message"
         rows="5"
+        maxlength="1000"
         required
       >{{ form_data.message | default("") }}</textarea>
       <p class="help-text">Max 1000 characters.</p>
@@ -95,7 +92,9 @@
       </select>
     </div>
 
-    <button type="submit">Submit</button>
+    <button type="submit" class="btn btn-primary">Send message</button>
   </form>
+  </main>
+  <footer class="footer"><span>Made with stncil</span><span>Rendered from local sample data.</span></footer>
 </body>
 </html>

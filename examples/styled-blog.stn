@@ -1,36 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Sora:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../apps/examples/shared/design.css" />
+
   <title>{{ title }} — {{ site_name }}</title>
-  @style {
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #222; }
-    .container { max-width: 960px; margin: 0 auto; padding: 2rem; }
-    header { background: #4f46e5; color: #fff; padding: 1.5rem 0; text-align: center; }
-    header h1 { font-size: 2rem; }
-    .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-    .card h2 { margin-bottom: .5rem; color: #4f46e5; }
-    .card .meta { color: #666; font-size: .875rem; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
-    .tag { display: inline-block; background: #eef2ff; color: #4f46e5; padding: .125rem .5rem; border-radius: 4px; font-size: .75rem; margin-right: .25rem; }
-    .empty-state { text-align: center; padding: 3rem; }
-    .empty-state h2 { color: #666; }
-    footer { text-align: center; color: #666; font-size: .875rem; padding: 2rem 0; border-top: 1px solid #ddd; margin-top: 2rem; }
-  }
+  @style { .post-notes { padding-top: 1rem; border-top: 1px solid var(--line); margin-top: 1rem; } }
 </head>
-<body>
-  <header>
+<body class="layout-narrow">
+  <a href="#main" class="skip-link">Skip to content</a>
+  <header class="site-header"><nav class="nav" aria-label="Example navigation"><a class="brand" href="hello.html"><span class="brand-sigil" aria-hidden="true">&#64;</span> stncil</a><span class="nav-divider" aria-hidden="true">/</span><span class="nav-current">Examples</span></nav></header>
+  <main id="main" class="container" tabindex="-1">
+
+  <div class="demo-heading">
     <div class="container">
       <h1>{{ site_name }}</h1>
       <p>{{ tagline }}</p>
     </div>
-  </header>
+  </div>
 
-  <main class="container">
+  <section class="demo-section">
     @if (posts && posts.length > 0) {
-      <div class="grid">
+      <div class="post-list">
       @each (post in posts) {
-        <article class="card">
+        <article class="post">
           <h2>{{ post.title }}</h2>
           <p class="meta">
             {{ post.author | default("Staff") }}
@@ -39,13 +36,13 @@
           </p>
           <p>{{ post.excerpt | truncate(150) }}</p>
           @if (post.tags && post.tags.length > 0) {
-            <p class="meta">
+            <p class="meta post-notes">
             @each (tag in post.tags) {
               <span class="tag">{{ tag }}</span>
             }
             </p>
           }
-          <a href='/posts/{{ post.slug }}'>Read more &rarr;</a>
+          <a class="read-more" href='/posts/{{ post.slug | url_encode }}'>Read more &rarr;</a>
         </article>
       }
       </div>
@@ -55,10 +52,10 @@
         <p>Posts will appear once published.</p>
       </div>
     }
-  </main>
+  </section>
 
-  <footer class="container">
-    <p>&copy; {{ year }} {{ site_name }}. Built with Stncil.</p>
-  </footer>
+
+  </main>
+  <footer class="footer"><span>Made with stncil</span><span>Rendered from local sample data.</span></footer>
 </body>
 </html>

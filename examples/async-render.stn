@@ -1,9 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Sora:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../apps/examples/shared/design.css" />
+
   <title>{{ title }}</title>
 </head>
-<body>
+<body class="layout-narrow">
+  <a href="#main" class="skip-link">Skip to content</a>
+  <header class="site-header"><nav class="nav" aria-label="Example navigation"><a class="brand" href="hello.html"><span class="brand-sigil" aria-hidden="true">&#64;</span> stncil</a><span class="nav-divider" aria-hidden="true">/</span><span class="nav-current">Examples</span></nav></header>
+  <main id="main" class="container" tabindex="-1">
+
   <h1>{{ title }}</h1>
 
   @async (user from fetchUser(userId)) {
@@ -22,7 +33,7 @@
     <div class="posts">
     @each (post in posts) {
       <article>
-        <h3><a href='{{ post.url }}'>{{ post.title }}</a></h3>
+        <h3><a href='{{ post.url | url }}'>{{ post.title }}</a></h3>
         <p>{{ post.body | truncate(300) }}</p>
       </article>
     }
@@ -31,8 +42,8 @@
     <p>Loading posts...</p>
   }
 
-  <footer>
-    <p>&copy; {{ year }} {{ site_name }}</p>
-  </footer>
+
+  </main>
+  <footer class="footer"><span>Made with stncil</span><span>Rendered from local sample data.</span></footer>
 </body>
 </html>

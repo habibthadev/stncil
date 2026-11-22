@@ -18,7 +18,10 @@ for (const name of (await fs.readdir(examples)).filter((name) => name.endsWith("
     assert.ok(!result.html.includes("@async"), "An async directive leaked into output");
     for (const text of expected[name] ?? [])
       assert.ok(result.html.includes(text), `Missing expected output: ${text}`);
-    await fs.writeFile(new URL(`${name.slice(0, -4)}.html`, output), result.html);
+    const html = result.html.includes("<html")
+      ? result.html
+      : `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Sora:wght@500&display=swap" rel="stylesheet"><link rel="stylesheet" href="../apps/examples/shared/design.css"><title>User card / stncil</title></head><body class="layout-narrow"><header class="site-header"><nav class="nav"><span class="brand"><span class="brand-sigil" aria-hidden="true">&#64;</span> stncil</span></nav></header><main class="container">${result.html}</main><footer class="footer">Rendered from local sample data.</footer></body></html>`;
+    await fs.writeFile(new URL(`${name.slice(0, -4)}.html`, output), html);
     console.log(`PASS ${name} (${Buffer.byteLength(result.html)} bytes)`);
   } catch (error) {
     failures++;
