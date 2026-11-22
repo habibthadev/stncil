@@ -57,15 +57,23 @@ export function exec(
   ctx: RenderContext,
   state: ExecutorState,
 ): void {
+  execBlock(instructions, ctx, state, true);
+}
+
+function execBlock(
+  instructions: readonly IrInstruction[],
+  ctx: RenderContext,
+  state: ExecutorState,
+  snapshot = false,
+): void {
+  const locals = instructions.some((instruction) => instruction.op === "LET");
+  const scope = snapshot || locals ? { ...ctx } : ctx;
   const parent = state.variables;
-  const scope: RenderContext = Object.assign(Object.create(null), ctx);
-  state.variables = Object.create(null);
+  if (locals) state.variables = Object.create(null);
   try {
-    for (const inst of instructions) {
-      execOne(inst, scope, state);
-    }
+    for (const inst of instructions) execOne(inst, scope, state);
   } finally {
-    state.variables = parent;
+    if (locals) state.variables = parent;
   }
 }
 
@@ -144,18 +152,18 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
       const ii = inst as IfInstruction;
       const cond = evalExpr(ii.condition, ctx, state.options.filters);
       if (cond) {
-        exec(ii.consequent, ctx, state);
+        execBlock(ii.consequent, ctx, state);
       } else {
         let matched = false;
         for (const ei of ii.elseIfs) {
           if (evalExpr(ei.condition, ctx, state.options.filters)) {
-            exec(ei.body, ctx, state);
+            execBlock(ei.body, ctx, state);
             matched = true;
             break;
           }
         }
         if (!matched && ii.alternate) {
-          exec(ii.alternate, ctx, state);
+          execBlock(ii.alternate, ctx, state);
         }
       }
       break;
@@ -166,7 +174,7 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
       const source = evalExpr(ei.source, ctx, state.options.filters);
       const arr = Array.isArray(source) ? source : [];
       if (arr.length === 0) {
-        exec(ei.empty, ctx, state);
+        execBlock(ei.empty, ctx, state);
       } else {
         for (let i = 0; i < arr.length; i++) {
           const loopCtx: RenderContext = {
@@ -184,9 +192,14 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
             [ei.as]: arr[i],
           };
           if (ei.indexAs) {
-            loopCtx[ei.indexAs] = i;
+            Object.defineProperty(loopCtx, ei.indexAs, {
+              value: i,
+              writable: true,
+              enumerable: true,
+              configurable: true,
+            });
           }
-          exec(ei.body, loopCtx, state);
+          execBlock(ei.body, loopCtx, state);
         }
       }
       break;
@@ -195,13 +208,18 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
     case "LET": {
       const li = inst as LetInstruction;
       state.variables[li.name] = evalExpr(li.value, ctx, state.options.filters);
-      ctx[li.name] = state.variables[li.name];
+      Object.defineProperty(ctx, li.name, {
+        value: state.variables[li.name],
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
       break;
     }
 
     case "CACHE_BLOCK": {
       const ci = inst as CacheBlockInstruction;
-      exec(ci.body, ctx, state);
+      execBlock(ci.body, ctx, state);
       break;
     }
 
@@ -209,14 +227,14 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
       const bi = inst as BoundaryInstruction;
       const output = state.output;
       try {
-        exec(bi.body, ctx, state);
+        execBlock(bi.body, ctx, state);
       } catch (err) {
         state.output = output;
         if (bi.errorBinding) {
           const errCtx: RenderContext = { ...ctx, [bi.errorBinding]: err };
-          exec(bi.fallback, errCtx, state);
+          execBlock(bi.fallback, errCtx, state);
         } else {
-          exec(bi.fallback, ctx, state);
+          execBlock(bi.fallback, ctx, state);
         }
       }
       break;
@@ -242,7 +260,7 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
         try {
           const arg = evalExpr(rci.arg, ctx, state.options.filters);
           const callCtx: RenderContext = { ...ctx, [def.param]: arg };
-          exec(def.body, callCtx, state);
+          execBlock(def.body, callCtx, state);
         } finally {
           state.depth.set(rci.name, curDepth);
         }

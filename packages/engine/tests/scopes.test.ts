@@ -1,7 +1,33 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Engine } from "../src/engine/index";
 
 describe("render scopes", () => {
+  it("snapshots enumerable root getters once at the start of a render", async () => {
+    let value = 0;
+    const getter = vi.fn(() => ++value);
+    const context = Object.defineProperty({}, "value", { enumerable: true, get: getter });
+    const result = await new Engine({ debug: false }).compileAndRender(
+      "{{ value }}{{ value }}",
+      context,
+    );
+    expect(result.html).toBe("11");
+    expect(getter).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps non-enumerable root data outside the template scope", async () => {
+    const context = Object.defineProperty({}, "secret", { value: "private" });
+    const result = await new Engine({ debug: false }).compileAndRender("{{ secret }}", context);
+    expect(result.html).toBe("");
+  });
+
+  it("binds prototype-named locals and indices as own data", async () => {
+    const result = await new Engine({ debug: false }).compileAndRender(
+      '@let __proto__ = "outer"\n@each (item, __proto__ in items) { {{ __proto__ }} }{{ __proto__ }}',
+      { items: ["a", "b"] },
+    );
+    expect(result.html.replace(/\s/g, "")).toBe("01outer");
+    expect(result.errors).toHaveLength(0);
+  });
   it("restores bindings after a conditional block", async () => {
     const result = await new Engine({ debug: false }).compileAndRender(
       '@let name = "outer"\n@if (true) { @let name = "inner" {{ name }} }|{{ name }}',
