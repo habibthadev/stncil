@@ -25,7 +25,7 @@ export class TypeChecker {
   private scope = new Scope();
   private errors: TypeCheckError[] = [];
   private warnings: TypeCheckError[] = [];
-  private context: Record<string, IrType> = {};
+  private context: Record<string, IrType> = Object.create(null);
   private outputMode: OutputMode = "html";
   private translationKeys = new Set<string>();
   private inScriptBlock = false;
@@ -497,7 +497,9 @@ export class TypeChecker {
         if (object?.kind === "array") return object.item;
         if (object?.kind === "record") return object.value;
         if (object?.kind === "object" && expr.key.kind === "string")
-          return object.fields[expr.key.value] ?? null;
+          return Object.hasOwn(object.fields, expr.key.value)
+            ? object.fields[expr.key.value]!
+            : null;
         return null;
       }
     }
@@ -539,7 +541,9 @@ export class TypeChecker {
     let type = entry.type;
     for (let i = 1; i < segments.length; i++) {
       if (type.kind === "object") {
-        const field = type.fields[segments[i]!];
+        const field = Object.hasOwn(type.fields, segments[i]!)
+          ? type.fields[segments[i]!]
+          : undefined;
         if (!field) {
           if (errorSpan) {
             this.addError("E003", `Property "${segments[i]}" does not exist on type`, errorSpan);
@@ -550,7 +554,9 @@ export class TypeChecker {
       } else if (type.kind === "nullable" || type.kind === "optional") {
         const inner = (type as any).inner as IrType;
         if (inner.kind === "object") {
-          const field = inner.fields[segments[i]!];
+          const field = Object.hasOwn(inner.fields, segments[i]!)
+            ? inner.fields[segments[i]!]
+            : undefined;
           if (!field) {
             if (errorSpan) {
               this.addError("E003", `Property "${segments[i]}" does not exist on type`, errorSpan);
@@ -572,7 +578,9 @@ export class TypeChecker {
         // Find first object variant
         const objVariant = type.variants.find((v) => v.kind === "object");
         if (objVariant && objVariant.kind === "object") {
-          const field = objVariant.fields[segments[i]!];
+          const field = Object.hasOwn(objVariant.fields, segments[i]!)
+            ? objVariant.fields[segments[i]!]
+            : undefined;
           if (!field) {
             if (errorSpan) {
               this.addError("E003", `Property "${segments[i]}" does not exist on type`, errorSpan);
@@ -614,7 +622,7 @@ export class TypeChecker {
       case "record":
         return { kind: "record", value: this.typeExprToIrType(typeExpr.value) };
       case "object": {
-        const fields: Record<string, IrType> = {};
+        const fields: Record<string, IrType> = Object.create(null);
         for (const f of typeExpr.fields) {
           fields[f.name] = f.optional
             ? { kind: "optional", inner: this.typeExprToIrType(f.typeExpr) }
