@@ -18,7 +18,7 @@ import type {
   RecursiveCallInstruction,
   StyleBlockInstruction,
 } from "@stncil/core";
-import { resolvePath, type RenderContext } from "./context";
+import { resolvePath, resolveMember, type RenderContext } from "./context";
 import { evalExpr } from "./eval";
 import { escapeHtml } from "../escape/html";
 import { escapeUrl } from "../escape/url";
@@ -187,9 +187,9 @@ export function execOne(inst: IrInstruction, ctx: RenderContext, state: Executor
               length: arr.length,
               revindex: arr.length - i,
               revindex0: arr.length - i - 1,
-              parent: ctx.loop ?? null,
+              parent: resolveMember(ctx, "loop") ?? null,
             },
-            [ei.as]: arr[i],
+            [ei.as]: resolveMember(arr, i),
           };
           if (ei.indexAs) {
             Object.defineProperty(loopCtx, ei.indexAs, {

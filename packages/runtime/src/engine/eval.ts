@@ -52,7 +52,7 @@ export function evalExpr(
   }
 }
 
-function evalBinary(op: string, left: unknown, right: unknown): unknown {
+export function evalBinary(op: string, left: unknown, right: unknown): unknown {
   switch (op) {
     case "==":
       return left === right;
@@ -86,7 +86,7 @@ function evalBinary(op: string, left: unknown, right: unknown): unknown {
   }
 }
 
-function arithmeticNumber(value: unknown): number {
+export function arithmeticNumber(value: unknown): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new TypeError("Arithmetic requires finite numbers");
   }

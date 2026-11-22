@@ -2,6 +2,7 @@ import type { IrDocument, IrInstruction } from "@stncil/core";
 import type { RenderContext } from "./context";
 import { createExecutorState, exec, type ExecutorState } from "./executor";
 import { createRenderPlan, joinChunks, type RuntimeOptions, type RenderChunk } from "./async";
+import { prepareProgram, type RenderProgram } from "./program";
 
 export interface RenderResult {
   readonly html: string;
@@ -39,6 +40,7 @@ function requiresAsync(instructions: readonly IrInstruction[]): boolean {
 export class RuntimeEngine {
   private doc: IrDocument;
   private readonly needsAsync: boolean;
+  private readonly program: RenderProgram | null;
 
   constructor(
     doc: IrDocument,
@@ -52,6 +54,7 @@ export class RuntimeEngine {
     }
     this.doc = doc;
     this.needsAsync = requiresAsync(doc.instructions);
+    this.program = prepareProgram(doc);
   }
 
   async renderAsync(ctx: RenderContext = {}): Promise<RenderResult> {
@@ -61,12 +64,17 @@ export class RuntimeEngine {
     this.options.signal?.addEventListener("abort", abort, { once: true });
     if (this.options.signal?.aborted) abort();
     try {
-      const chunks = createRenderPlan(this.doc.instructions, ctx, createExecutorState(this.options), {
-        ...this.options,
-        signal: controller.signal,
-        sourceFile: this.doc.sourceFile,
-        templateDepth: 0,
-      });
+      const chunks = createRenderPlan(
+        this.doc.instructions,
+        ctx,
+        createExecutorState(this.options),
+        {
+          ...this.options,
+          signal: controller.signal,
+          sourceFile: this.doc.sourceFile,
+          templateDepth: 0,
+        },
+      );
       return { html: await joinChunks(chunks), errors: [] };
     } catch (error) {
       controller.abort(error);
@@ -77,6 +85,7 @@ export class RuntimeEngine {
   }
 
   render(ctx: RenderContext = {}): RenderResult {
+    if (this.program) return this.program.render(ctx, this.options);
     const state = createExecutorState(this.options);
     const mergedCtx: RenderContext = ctx;
     const errors: Error[] = [];

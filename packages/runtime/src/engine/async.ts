@@ -1,7 +1,7 @@
 import type { IrInstruction, IrDocument } from "@stncil/core";
 import { evalExpr } from "./eval";
 import { createExecutorState, execOne, type ExecutorState, type OutputOptions } from "./executor";
-import type { RenderContext } from "./context";
+import { resolveMember, type RenderContext } from "./context";
 
 export type Fetcher = (...args: unknown[]) => unknown | Promise<unknown>;
 
@@ -104,9 +104,9 @@ export function createRenderPlan(
               length: items.length,
               revindex: items.length - i,
               revindex0: items.length - i - 1,
-              parent: scope.loop ?? null,
+              parent: resolveMember(scope, "loop") ?? null,
             },
-            [instruction.as]: items[i],
+            [instruction.as]: resolveMember(items, i),
           };
           if (instruction.indexAs) child[instruction.indexAs] = i;
           appendPlan(createRenderPlan(instruction.body, child, state, options));
